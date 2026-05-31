@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>spark — вход</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .emoji-picker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .emoji-option {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: #1a1a1a;
+      border: 2px solid #2a2a2a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .emoji-option:hover {
+      border-color: #4a4a4a;
+      background: #222;
+    }
+    .emoji-option.selected {
+      border-color: #f0f0f0;
+      background: #2a2a2a;
+      box-shadow: 0 0 12px rgba(255,255,255,0.1);
+    }
+    .selected-emoji-preview {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #1a1a1a;
+      border: 2px solid #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin: 0 auto 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h1>spark</h1>
+  <p class="sub">только ник. только пароль. и твой эмодзи навсегда.</p>
+
+  <div class="toggle" id="modeToggle">
+    <button id="loginTab" class="active">вход</button>
+    <button id="regTab">регистрация</button>
+  </div>
+
+  <div class="field">
+    <label>ник</label>
+    <input type="text" id="nickname" placeholder="твой ник" autocomplete="off" maxlength="16" autofocus>
+  </div>
+
+  <div class="field">
+    <label>пароль</label>
+    <input type="password" id="password" placeholder="••••••••" autocomplete="off">
+  </div>
+
+  <div class="field" id="confirmField" style="display:none;">
+    <label>повтори пароль</label>
+    <input type="password" id="confirmPassword" placeholder="••••••••" autocomplete="off">
+  </div>
+
+  <!-- Выбор эмодзи (только при регистрации) -->
+  <div id="emojiSection" style="display:none;">
+    <label style="display:block;font-size:0.65rem;text-transform:uppercase;letter-spacing:1.2px;color:#555;margin-bottom:10px;text-align:center;">
+      выбери эмодзи (нельзя изменить)
+    </label>
+    <div class="selected-emoji-preview" id="selectedEmojiPreview">😎</div>
+    <div class="emoji-picker" id="emojiPicker"></div>
+  </div>
+
+  <button class="btn" id="submitBtn">войти</button>
+  <div class="error" id="errorMsg"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getDatabase, ref, get, set, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAr8MamzQhhvUjZ1VIWvytRheHWjNtiRIM",
+  authDomain: "spark-9e768.firebaseapp.com",
+  databaseURL: "https://spark-9e768-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "spark-9e768",
+  storageBucket: "spark-9e768.firebasestorage.app",
+  messagingSenderId: "660066059407",
+  appId: "1:660066059407:web:0d87f09259e53563555cfa"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const saved = localStorage.getItem('spark_user');
+if (saved) {
+  (async () => {
+    const snap = await get(ref(db, `users/${saved}`));
+    if (snap.exists()) {
+      await update(ref(db, `users/${saved}`), { online: true, lastSeen: Date.now(), status: 'online' });
+      window.location.href = '/lobby';
+    } else {
+      localStorage.removeItem('spark_user');
+    }
+  })();
+}
+
+const emojiList = ['😎', '🦊', '🐺', '👑', '💀', '👾', '🐉', '🔥', '⚡', '🌟', '🎯', '🔮', '🦅', '🐍', '🍀', '🎲', '🛡️', '🗡️', '🏆', '💎', '🌙', '🦾', '🎸', '🚀'];
+let selectedEmoji = '😎';
+
+const emojiPicker = document.getElementById('emojiPicker');
+const selectedEmojiPreview = document.getElementById('selectedEmojiPreview');
+
+emojiList.forEach(emoji => {
+  const div = document.createElement('div');
+  div.className = 'emoji-option';
+  div.textContent = emoji;
+  if (emoji === selectedEmoji) div.classList.add('selected');
+  div.addEventListener('click', () => {
+    document.querySelectorAll('.emoji-option').forEach(el => el.classList.remove('selected'));
+    div.classList.add('selected');
+    selectedEmoji = emoji;
+    selectedEmojiPreview.textContent = emoji;
+  });
+  emojiPicker.appendChild(div);
+});
+
+let mode = 'login';
+
+document.getElementById('loginTab').addEventListener('click', () => switchMode('login'));
+document.getElementById('regTab').addEventListener('click', () => switchMode('register'));
+document.getElementById('submitBtn').addEventListener('click', handleSubmit);
+
+function switchMode(m) {
+  mode = m;
+  document.getElementById('loginTab').classList.toggle('active', m === 'login');
+  document.getElementById('regTab').classList.toggle('active', m === 'register');
+  document.getElementById('confirmField').style.display = m === 'register' ? 'block' : 'none';
+  document.getElementById('emojiSection').style.display = m === 'register' ? 'block' : 'none';
+  document.getElementById('submitBtn').textContent = m === 'login' ? 'войти' : 'создать';
+  document.getElementById('errorMsg').textContent = '';
+}
+
+async function handleSubmit() {
+  const nick = document.getElementById('nickname').value.trim().toLowerCase();
+  const pass = document.getElementById('password').value;
+  const errorEl = document.getElementById('errorMsg');
+
+  if (!nick || !pass) return (errorEl.textContent = 'заполни все поля');
+  if (nick.length < 2) return (errorEl.textContent = 'ник минимум 2 символа');
+  if (pass.length < 4) return (errorEl.textContent = 'пароль минимум 4 символа');
+  if (!/^[a-z0-9_]+$/.test(nick)) return (errorEl.textContent = 'только латиница, цифры и _');
+
+  if (mode === 'register') {
+    const confirm = document.getElementById('confirmPassword').value;
+    if (pass !== confirm) return (errorEl.textContent = 'пароли не совпадают');
+
+    const userRef = ref(db, `users/${nick}`);
+    const snap = await get(userRef);
+    if (snap.exists()) return (errorEl.textContent = 'такой ник уже занят');
+
+    await set(userRef, {
+      nick: nick,
+      password: pass,
+      emoji: selectedEmoji,
+      createdAt: Date.now(),
+      rating: 1000,
+      wins: 0,
+      losses: 0,
+      online: true,
+      lastSeen: Date.now(),
+      status: 'online'
+    });
+
+    localStorage.setItem('spark_user', nick);
+    window.location.href = '/lobby';
+  } else {
+    const snap = await get(ref(db, `users/${nick}`));
+    if (!snap.exists()) return (errorEl.textContent = 'такого ника нет');
+    if (snap.val().password !== pass) return (errorEl.textContent = 'неверный пароль');
+
+    await update(ref(db, `users/${nick}`), { online: true, lastSeen: Date.now(), status: 'online' });
+    localStorage.setItem('spark_user', nick);
+    window.location.href = '/lobby';
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>spark — репорты</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .sidebar-balance {
+      margin-top: auto;
+      padding: 12px;
+      background: #0f0f0f;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    .balance-label {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #555;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .balance-amount {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .premium-sidebar-note {
+      font-size: 0.55rem;
+      color: #444;
+      text-align: center;
+      margin-top: 8px;
+      font-style: italic;
+      letter-spacing: 0.3px;
+    }
+    .premium-report {
+      background: linear-gradient(135deg, #1a1a1a, #1a1500);
+      border-left: 3px solid #facc15;
+      position: relative;
+      overflow: hidden;
+    }
+    .premium-report::before {
+      content: "👑";
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      font-size: 20px;
+      opacity: 0.3;
+    }
+    .premium-badge-small {
+      display: inline-block;
+      background: linear-gradient(135deg, #facc15, #ff8c00);
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #0b0b0b;
+      margin-left: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+  
+  <div class="sidebar">
+    <div class="sidebar-logo">spark</div>
+    <a href="/profile" class="sidebar-item">
+      <span class="sidebar-icon">😎</span>
+      <span>профиль</span>
+    </a>
+    <a href="/friends" class="sidebar-item">
+      <span class="sidebar-icon">🍋‍🟩</span>
+      <span>друзья</span>
+    </a>
+    <a href="/lobby" class="sidebar-item">
+      <span class="sidebar-icon">⚔️</span>
+      <span>лобби</span>
+    </a>
+    <div class="sidebar-divider"></div>
+    <a href="/reports" class="sidebar-item active">
+      <span class="sidebar-icon">🚩</span>
+      <span>репорты</span>
+    </a>
+    <a href="/shop" class="sidebar-item">
+      <span class="sidebar-icon">👑</span>
+      <span>PSS</span>
+    </a>
+    <a href="/admin" class="sidebar-item" id="adminSidebarLink" style="display:none;">
+      <span class="sidebar-icon">🛡️</span>
+      <span>админка</span>
+    </a>
+    
+    <div class="sidebar-balance">
+      <div class="balance-label">
+        <span>👑</span> СТАТУС
+      </div>
+      <div class="balance-amount" id="premiumStatusDisplay">не куплен</div>
+    </div>
+    <div class="premium-sidebar-note" id="premiumNote" style="display:none;">теперь все обновления ты будешь видеть первым</div>
+    
+    <button class="sidebar-item" id="logoutBtn" style="color:#f87171;">
+      <span class="sidebar-icon">🚪</span>
+      <span>выйти</span>
+    </button>
+  </div>
+
+  <div class="main">
+    <div class="profile-content">
+      
+      <div class="section-header">
+        <span class="section-icon">🚩</span>
+        <h2 class="section-title">репорты</h2>
+        <span class="section-count" id="reportsCount">0</span>
+      </div>
+
+      <div id="reportsList" style="margin-top: 20px;">
+        <div style="text-align:center;color:var(--muted);padding:30px;font-size:0.85rem;">загрузка...</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div id="toast" class="toast" style="display:none;"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getDatabase, ref, get, set, push, onValue, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+import { startOnlineHeartbeat } from './app.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAr8MamzQhhvUjZ1VIWvytRheHWjNtiRIM",
+  authDomain: "spark-9e768.firebaseapp.com",
+  databaseURL: "https://spark-9e768-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "spark-9e768",
+  storageBucket: "spark-9e768.firebasestorage.app",
+  messagingSenderId: "660066059407",
+  appId: "1:660066059407:web:0d87f09259e53563555cfa"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const nick = localStorage.getItem('spark_user');
+if (!nick) window.location.href = '/';
+
+const myRef = ref(db, `users/${nick}`);
+const reportsRef = ref(db, 'reports');
+
+startOnlineHeartbeat(nick);
+
+// Обновление премиум статуса в сайдбаре
+function updatePremiumUI(data) {
+  const isPremium = data.premium === true;
+  const statusDisplay = document.getElementById('premiumStatusDisplay');
+  const premiumNote = document.getElementById('premiumNote');
+  
+  if (isPremium) {
+    statusDisplay.innerHTML = 'активирован 👑';
+    statusDisplay.style.color = '#facc15';
+    premiumNote.style.display = 'block';
+  } else {
+    statusDisplay.innerHTML = 'не куплен';
+    statusDisplay.style.color = '#f87171';
+    premiumNote.style.display = 'none';
+  }
+}
+
+onValue(myRef, (snap) => {
+  if (snap.exists()) {
+    const data = snap.val();
+    updatePremiumUI(data);
+    
+    if (data.role === 'owner' || data.role === 'admin' || data.role === 'junior') {
+      document.getElementById('adminSidebarLink').style.display = 'flex';
+    }
+  }
+});
+
+document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+  await update(myRef, { online: false, status: 'offline', lastSeen: Date.now() });
+  localStorage.removeItem('spark_user');
+  window.location.href = '/';
+});
+
+// ========== ОТПРАВКА РЕПОРТА ==========
+function showReportModal() {
+  const modal = document.createElement('div');
+  modal.className = 'overlay';
+  modal.style.display = 'flex';
+  modal.innerHTML = `
+    <div class="card" style="max-width:400px;">
+      <h3 style="margin-bottom:16px;">🚩 отправить репорт</h3>
+      <div class="field">
+        <label>жалоба на игрока</label>
+        <input type="text" id="reportNick" placeholder="ник игрока">
+      </div>
+      <div class="field">
+        <label>причина</label>
+        <textarea id="reportMessage" rows="3" placeholder="опишите проблему..." style="width:100%;padding:12px;background:#1a1a1a;border:1px solid var(--border);border-radius:var(--radius);color:white;font-family:inherit;"></textarea>
+      </div>
+      <div class="error" id="reportError"></div>
+      <div style="display:flex;gap:12px;margin-top:20px;">
+        <button class="btn ghost" id="cancelReport">отмена</button>
+        <button class="btn" id="submitReport">отправить</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const cancelBtn = modal.querySelector('#cancelReport');
+  const submitBtn = modal.querySelector('#submitReport');
+  const nickInput = modal.querySelector('#reportNick');
+  const msgInput = modal.querySelector('#reportMessage');
+  const errorEl = modal.querySelector('#reportError');
+
+  cancelBtn.addEventListener('click', () => modal.remove());
+  
+  submitBtn.addEventListener('click', async () => {
+    const targetNick = nickInput.value.trim().toLowerCase();
+    const message = msgInput.value.trim();
+    
+    if (!targetNick) {
+      errorEl.textContent = 'введи ник игрока';
+      return;
+    }
+    if (targetNick === nick) {
+      errorEl.textContent = 'нельзя жаловаться на себя';
+      return;
+    }
+    if (!message) {
+      errorEl.textContent = 'введи причину жалобы';
+      return;
+    }
+    
+    const userSnap = await get(ref(db, `users/${targetNick}`));
+    if (!userSnap.exists()) {
+      errorEl.textContent = 'игрок не найден';
+      return;
+    }
+    
+    await push(reportsRef, {
+      from: nick,
+      about: targetNick,
+      message: message,
+      status: 'unread',
+      createdAt: Date.now()
+    });
+    
+    showToast(`репорт на ${targetNick} отправлен`);
+    modal.remove();
+    loadReports();
+  });
+}
+
+// ========== ЗАГРУЗКА РЕПОРТОВ ==========
+const reportsList = document.getElementById('reportsList');
+const reportsCount = document.getElementById('reportsCount');
+
+async function loadReports() {
+  const usersSnap = await get(ref(db, 'users'));
+  const users = usersSnap.val() || {};
+  
+  onValue(reportsRef, (snap) => {
+    const reports = snap.val() || {};
+    const reportsArr = Object.entries(reports).sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+    
+    reportsCount.textContent = reportsArr.length;
+    
+    if (reportsArr.length === 0) {
+      reportsList.innerHTML = `
+        <div style="text-align:center;color:var(--muted);padding:40px;">
+          <div style="font-size:3rem;margin-bottom:10px;">🚩</div>
+          <div>репортов пока нет</div>
+          <button class="btn mt-2" id="newReportBtn">создать репорт</button>
+        </div>
+      `;
+      const newBtn = document.getElementById('newReportBtn');
+      if (newBtn) newBtn.addEventListener('click', showReportModal);
+      return;
+    }
+    
+    reportsList.innerHTML = `
+      <button class="btn" id="newReportBtn" style="margin-bottom:16px;">➕ новый репорт</button>
+      ${reportsArr.map(([id, report]) => {
+        const fromUser = users[report.from] || {};
+        const aboutUser = users[report.about] || {};
+        const isPremium = fromUser.premium === true;
+        const premiumClass = isPremium ? 'premium-report' : '';
+        const premiumBadge = isPremium ? '<span class="premium-badge-small">👑 PREMIUM</span>' : '';
+        
+        let statusText = '';
+        let statusClass = '';
+        switch(report.status) {
+          case 'unread': statusText = '🟡 не прочитано'; statusClass = 'status-unread'; break;
+          case 'pending': statusText = '⏳ на рассмотрении'; statusClass = 'status-pending'; break;
+          case 'accepted': statusText = '✅ принято'; statusClass = 'status-accepted'; break;
+          case 'declined': statusText = '❌ отклонено'; statusClass = 'status-declined'; break;
+          default: statusText = '🟡 не прочитано'; statusClass = 'status-unread';
+        }
+        
+        return `
+          <div class="friend-item ${premiumClass}" style="flex-direction:column;align-items:stretch;margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <div class="friend-nick">
+                🚨 ${report.from} → ${report.about}
+                ${premiumBadge}
+              </div>
+              <span class="${statusClass}" style="font-size:0.7rem;padding:2px 8px;border-radius:12px;background:#1a1a1a;">${statusText}</span>
+            </div>
+            <div class="friend-status" style="margin-bottom:8px;">📝 ${report.message}</div>
+            <div class="friend-status" style="font-size:0.65rem;color:#555;">🕐 ${new Date(report.createdAt || 0).toLocaleString()}</div>
+          </div>
+        `;
+      }).join('')}
+    `;
+    
+    const newBtn = document.getElementById('newReportBtn');
+    if (newBtn) newBtn.addEventListener('click', showReportModal);
+  });
+}
+
+loadReports();
+
+function showToast(msg) {
+  let toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  setTimeout(() => toast.style.display = 'none', 2000);
+}
+</script>
+</body>
+</html>

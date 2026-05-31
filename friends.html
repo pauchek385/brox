@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>spark — друзья</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .sidebar-balance {
+      margin-top: auto;
+      padding: 12px;
+      background: #0f0f0f;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    .balance-label {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #555;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .balance-amount {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .premium-sidebar-note {
+      font-size: 0.55rem;
+      color: #444;
+      text-align: center;
+      margin-top: 8px;
+      font-style: italic;
+      letter-spacing: 0.3px;
+    }
+    .premium-active-badge {
+      background: linear-gradient(135deg, #facc15, #ff8c00);
+      color: #0b0b0b;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+  
+  <div class="sidebar">
+    <div class="sidebar-logo">spark</div>
+    <a href="/profile" class="sidebar-item">
+      <span class="sidebar-icon">😎</span>
+      <span>профиль</span>
+    </a>
+    <a href="/friends" class="sidebar-item active">
+      <span class="sidebar-icon">🍋‍🟩</span>
+      <span>друзья</span>
+    </a>
+    <a href="/lobby" class="sidebar-item">
+      <span class="sidebar-icon">⚔️</span>
+      <span>лобби</span>
+    </a>
+    <div class="sidebar-divider"></div>
+    <a href="/reports" class="sidebar-item">
+      <span class="sidebar-icon">🚩</span>
+      <span>репорты</span>
+    </a>
+    <a href="/shop" class="sidebar-item">
+      <span class="sidebar-icon">👑</span>
+      <span>PSS</span>
+    </a>
+    <a href="/admin" class="sidebar-item" id="adminSidebarLink" style="display:none;">
+      <span class="sidebar-icon">🛡️</span>
+      <span>админка</span>
+    </a>
+    
+    <div class="sidebar-balance">
+      <div class="balance-label">
+        <span>👑</span> СТАТУС
+      </div>
+      <div class="balance-amount" id="premiumStatusDisplay">не куплен</div>
+    </div>
+    <div class="premium-sidebar-note" id="premiumNote" style="display:none;">теперь все обновления ты будешь видеть первым</div>
+    
+    <button class="sidebar-item" id="logoutBtn" style="color:#f87171;">
+      <span class="sidebar-icon">🚪</span>
+      <span>выйти</span>
+    </button>
+  </div>
+
+  <div class="main">
+    <div class="profile-content">
+      
+      <div class="section-header">
+        <span class="section-icon">🍋‍🟩</span>
+        <h2 class="section-title">друзья</h2>
+        <span class="section-count" id="friendsCountHeader">0</span>
+      </div>
+
+      <div class="field" style="margin-bottom:8px;">
+        <input type="text" id="addFriendInput" placeholder="введи ник чтобы добавить..." autocomplete="off">
+      </div>
+      <div id="searchResult" style="margin-bottom:16px;"></div>
+
+      <div id="requestsBlock" style="display:none; margin-bottom:24px;">
+        <div class="divider">запросы в друзья</div>
+        <div id="requestsList"></div>
+      </div>
+
+      <div class="divider">твои друзья</div>
+      <div id="friendsList" style="max-height:45vh;overflow-y:auto;">
+        <div style="text-align:center;color:var(--muted);padding:30px;font-size:0.85rem;">загрузка...</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div id="toast" class="toast" style="display:none;"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getDatabase, ref, get, set, update, onValue, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+import { startOnlineHeartbeat, checkUserOnlineStatus } from './app.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAr8MamzQhhvUjZ1VIWvytRheHWjNtiRIM",
+  authDomain: "spark-9e768.firebaseapp.com",
+  databaseURL: "https://spark-9e768-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "spark-9e768",
+  storageBucket: "spark-9e768.firebasestorage.app",
+  messagingSenderId: "660066059407",
+  appId: "1:660066059407:web:0d87f09259e53563555cfa"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const nick = localStorage.getItem('spark_user');
+if (!nick) window.location.href = '/';
+
+const myRef = ref(db, `users/${nick}`);
+
+startOnlineHeartbeat(nick);
+
+// Обновление премиум статуса в сайдбаре
+function updatePremiumUI(data) {
+  const isPremium = data.premium === true;
+  const statusDisplay = document.getElementById('premiumStatusDisplay');
+  const premiumNote = document.getElementById('premiumNote');
+  
+  if (isPremium) {
+    statusDisplay.innerHTML = 'активирован 👑';
+    statusDisplay.style.color = '#facc15';
+    premiumNote.style.display = 'block';
+  } else {
+    statusDisplay.innerHTML = 'не куплен';
+    statusDisplay.style.color = '#f87171';
+    premiumNote.style.display = 'none';
+  }
+}
+
+onValue(myRef, (snap) => {
+  if (snap.exists()) {
+    const data = snap.val();
+    updatePremiumUI(data);
+    
+    if (data.role === 'owner' || data.role === 'admin' || data.role === 'junior') {
+      document.getElementById('adminSidebarLink').style.display = 'flex';
+    }
+  }
+});
+
+document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+  await update(myRef, { online: false, status: 'offline', lastSeen: Date.now() });
+  localStorage.removeItem('spark_user');
+  window.location.href = '/';
+});
+
+// ========== ПОИСК ИГРОКА И ОТПРАВКА ЗАПРОСА ==========
+const addFriendInput = document.getElementById('addFriendInput');
+const searchResult = document.getElementById('searchResult');
+let searchTimeout;
+
+addFriendInput.addEventListener('input', () => {
+  clearTimeout(searchTimeout);
+  const query = addFriendInput.value.trim().toLowerCase();
+  
+  if (!query) { searchResult.innerHTML = ''; return; }
+
+  searchTimeout = setTimeout(async () => {
+    const usersSnap = await get(ref(db, 'users'));
+    const users = usersSnap.val() || {};
+    const mySnap = await get(myRef);
+    const myData = mySnap.val() || {};
+    const myFriends = myData.friends || {};
+
+    const found = Object.entries(users).find(([name]) => {
+      if (name === nick) return false;
+      if (myFriends[name]) return false;
+      return name.toLowerCase().includes(query);
+    });
+
+    if (!found) {
+      searchResult.innerHTML = '<div style="padding:12px;color:var(--muted);font-size:0.8rem;">никого не найдено</div>';
+      return;
+    }
+
+    const [name, userData] = found;
+    const targetRequestsSnap = await get(ref(db, `users/${name}/friendRequests`));
+    const targetRequests = targetRequestsSnap.val() || {};
+    const alreadySent = targetRequests[nick] === true;
+    const userEmoji = userData.emoji || '😎';
+    const isPremium = userData.premium === true;
+    
+    const nickDisplay = isPremium ? '<span class="premium-icon"></span><span class="premium-nick">' + name + '</span>' : name;
+
+    searchResult.innerHTML = `
+      <div class="friend-item" data-nick="${name}" style="cursor:pointer;">
+        <div class="avatar">${userEmoji}</div>
+        <div class="friend-info">
+          <div class="friend-nick">${nickDisplay}</div>
+          <div class="friend-status">${userData.rating || 1000} ★</div>
+        </div>
+        <button class="btn-add" data-add="${name}" ${alreadySent ? 'disabled' : ''} style="${alreadySent ? 'opacity:0.5;' : ''}">${alreadySent ? 'запрос отправлен' : 'добавить'}</button>
+      </div>
+    `;
+
+    const friendDiv = searchResult.querySelector('.friend-item');
+    if (friendDiv) {
+      friendDiv.addEventListener('click', (e) => {
+        if (!e.target.closest('.btn-add')) {
+          window.location.href = `/user?nick=${name}`;
+        }
+      });
+    }
+
+    if (!alreadySent) {
+      const addBtn = document.querySelector('[data-add]');
+      if (addBtn) {
+        addBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await set(ref(db, `users/${name}/friendRequests/${nick}`), true);
+          addFriendInput.value = '';
+          searchResult.innerHTML = '';
+          showToast(`запрос в друзья отправлен ${name}`);
+        });
+      }
+    }
+  }, 300);
+});
+
+// ========== ВХОДЯЩИЕ ЗАПРОСЫ ==========
+const requestsBlock = document.getElementById('requestsBlock');
+const requestsList = document.getElementById('requestsList');
+
+function loadRequests() {
+  onValue(ref(db, `users/${nick}/friendRequests`), async (snap) => {
+    const requests = snap.val() || {};
+    const requestNicks = Object.keys(requests);
+    
+    if (requestNicks.length === 0) {
+      requestsBlock.style.display = 'none';
+      return;
+    }
+
+    requestsBlock.style.display = 'block';
+    const usersSnap = await get(ref(db, 'users'));
+    const allUsers = usersSnap.val() || {};
+
+    requestsList.innerHTML = requestNicks.map(fromNick => {
+      const userData = allUsers[fromNick] || {};
+      const userEmoji = userData.emoji || '😎';
+      const isPremium = userData.premium === true;
+      const nickDisplay = isPremium ? '<span class="premium-icon"></span><span class="premium-nick">' + fromNick + '</span>' : fromNick;
+      
+      return `
+        <div class="friend-item" data-nick="${fromNick}" style="cursor:pointer;">
+          <div class="avatar">${userEmoji}</div>
+          <div class="friend-info">
+            <div class="friend-nick">${nickDisplay}</div>
+            <div class="friend-status">${userData.rating || 1000} ★</div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="btn-accept" data-accept="${fromNick}">принять</button>
+            <button class="btn-decline" data-decline="${fromNick}">отклонить</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    document.querySelectorAll('.friend-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        if (!e.target.closest('button')) {
+          const nick = item.dataset.nick;
+          if (nick) window.location.href = `/user?nick=${nick}`;
+        }
+      });
+    });
+
+    document.querySelectorAll('[data-accept]').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const from = btn.dataset.accept;
+        await set(ref(db, `users/${nick}/friends/${from}`), true);
+        await set(ref(db, `users/${from}/friends/${nick}`), true);
+        await remove(ref(db, `users/${nick}/friendRequests/${from}`));
+        showToast(`${from} теперь твой друг`);
+      });
+    });
+
+    document.querySelectorAll('[data-decline]').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const from = btn.dataset.decline;
+        await remove(ref(db, `users/${nick}/friendRequests/${from}`));
+        showToast(`запрос от ${from} отклонён`);
+      });
+    });
+  });
+}
+
+loadRequests();
+
+// ========== ЗАГРУЗКА ДРУЗЕЙ ==========
+const friendsListEl = document.getElementById('friendsList');
+const friendsCountHeader = document.getElementById('friendsCountHeader');
+
+async function loadFriends() {
+  onValue(myRef, async (snap) => {
+    if (!snap.exists()) return;
+    const data = snap.val();
+    const friends = data.friends || {};
+    const friendsArr = Object.keys(friends);
+    
+    friendsCountHeader.textContent = friendsArr.length;
+
+    if (friendsArr.length === 0) {
+      friendsListEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:30px;font-size:0.85rem;">пока нет друзей</div>';
+      return;
+    }
+
+    const usersSnap = await get(ref(db, 'users'));
+    const allUsers = usersSnap.val() || {};
+
+    const friendsWithStatus = await Promise.all(
+      friendsArr.map(async (friendNick) => {
+        const friendData = allUsers[friendNick] || {};
+        const status = await checkUserOnlineStatus(friendNick);
+        const userEmoji = friendData.emoji || '😎';
+        const isPremium = friendData.premium === true;
+        return { friendNick, friendData, status, userEmoji, isPremium };
+      })
+    );
+
+    friendsListEl.innerHTML = friendsWithStatus.map(f => {
+      const statusClass = f.status === 'online' ? 'online' : f.status === 'afk' ? 'afk' : 'offline';
+      const statusText = f.status === 'online' ? 'в сети' : f.status === 'afk' ? 'афк' : 'не в сети';
+      const nickDisplay = f.isPremium ? '<span class="premium-icon"></span><span class="premium-nick">' + f.friendNick + '</span>' : f.friendNick;
+      
+      return `
+        <div class="friend-item" data-nick="${f.friendNick}" style="cursor:pointer;">
+          <div class="avatar">${f.userEmoji}</div>
+          <div class="friend-info">
+            <div class="friend-nick">${nickDisplay}</div>
+            <div class="friend-status">
+              <span class="status-dot ${statusClass}"></span>
+              <span>${statusText}</span>
+            </div>
+          </div>
+          <button class="btn-remove" data-remove="${f.friendNick}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    document.querySelectorAll('.friend-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        if (!e.target.closest('.btn-remove')) {
+          const nick = item.dataset.nick;
+          if (nick) window.location.href = `/user?nick=${nick}`;
+        }
+      });
+    });
+
+    document.querySelectorAll('[data-remove]').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const target = btn.dataset.remove;
+        await remove(ref(db, `users/${nick}/friends/${target}`));
+        await remove(ref(db, `users/${target}/friends/${nick}`));
+        showToast(`${target} удалён из друзей`);
+      });
+    });
+  });
+}
+
+loadFriends();
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  setTimeout(() => toast.style.display = 'none', 2000);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>spark — Premium Status</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👑</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    @keyframes glow {
+      0%, 100% { text-shadow: 0 0 20px rgba(250, 204, 21, 0.5); }
+      50% { text-shadow: 0 0 40px rgba(250, 204, 21, 0.8); }
+    }
+    @keyframes pulse-gold {
+      0%, 100% { box-shadow: 0 0 5px #facc15, 0 0 10px #facc15; }
+      50% { box-shadow: 0 0 20px #facc15, 0 0 30px #facc15; }
+    }
+    @keyframes shine {
+      0% { left: -100%; }
+      100% { left: 200%; }
+    }
+    
+    .premium-container {
+      max-width: 500px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    
+    .premium-title {
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+    .premium-title h1 {
+      font-size: 3rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #facc15, #ffd700, #ff8c00, #facc15);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: glow 2s ease-in-out infinite, gradientShift 3s ease infinite;
+      letter-spacing: -1px;
+    }
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    .premium-sub {
+      font-size: 0.9rem;
+      color: #888;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    
+    .crown {
+      font-size: 5rem;
+      animation: float 2s ease-in-out infinite;
+      display: inline-block;
+      filter: drop-shadow(0 0 10px #facc15);
+    }
+    
+    .reasons-list {
+      background: #161616;
+      border-radius: 24px;
+      padding: 24px;
+      margin: 30px 0;
+      border: 1px solid #2a2a2a;
+      text-align: left;
+    }
+    .reasons-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #facc15;
+      text-align: center;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .reason-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid #2a2a2a;
+      font-size: 0.9rem;
+    }
+    .reason-item:last-child {
+      border-bottom: none;
+    }
+    .reason-emoji {
+      font-size: 1.5rem;
+      min-width: 45px;
+      text-align: center;
+    }
+    .reason-text {
+      color: #ccc;
+      line-height: 1.4;
+    }
+    .reason-text strong {
+      color: #facc15;
+    }
+    
+    .buy-btn {
+      width: 100%;
+      padding: 20px;
+      background: linear-gradient(135deg, #facc15, #ff8c00);
+      border: none;
+      border-radius: 60px;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #0b0b0b;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      font-family: inherit;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      animation: pulse-gold 2s infinite;
+    }
+    .buy-btn:hover {
+      transform: scale(1.02);
+      filter: brightness(1.05);
+    }
+    .buy-btn:active {
+      transform: scale(0.98);
+    }
+    .buy-btn::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 50%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transform: skewX(-20deg);
+      animation: shine 3s infinite;
+    }
+    .buy-price {
+      font-size: 0.9rem;
+      font-weight: 400;
+      opacity: 0.8;
+      margin-top: 5px;
+    }
+    
+    .locked-badge {
+      display: inline-block;
+      background: #2a2a2a;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      color: #f87171;
+      margin-top: 15px;
+    }
+    
+    .sidebar-balance {
+      margin-top: auto;
+      padding: 12px;
+      background: #0f0f0f;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    .balance-label {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #555;
+      margin-bottom: 4px;
+    }
+    .balance-amount {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    
+    @media (max-width: 550px) {
+      .premium-title h1 { font-size: 2rem; }
+      .crown { font-size: 3.5rem; }
+      .buy-btn { font-size: 1.2rem; padding: 16px; }
+      .reason-item { font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+  
+  <div class="sidebar">
+    <div class="sidebar-logo">spark</div>
+    <a href="/profile" class="sidebar-item">
+      <span class="sidebar-icon">😎</span>
+      <span>профиль</span>
+    </a>
+    <a href="/friends" class="sidebar-item">
+      <span class="sidebar-icon">🍋‍🟩</span>
+      <span>друзья</span>
+    </a>
+    <a href="/lobby" class="sidebar-item">
+      <span class="sidebar-icon">⚔️</span>
+      <span>лобби</span>
+    </a>
+    <div class="sidebar-divider"></div>
+    <a href="/reports" class="sidebar-item">
+      <span class="sidebar-icon">🚩</span>
+      <span>репорты</span>
+    </a>
+    <a href="/shop" class="sidebar-item active">
+      <span class="sidebar-icon">👑</span>
+      <span>PSS</span>
+    </a>
+    <a href="/admin" class="sidebar-item" id="adminSidebarLink" style="display:none;">
+      <span class="sidebar-icon">🛡️</span>
+      <span>админка</span>
+    </a>
+    
+    <div class="sidebar-balance">
+      <div class="balance-label">👑 СТАТУС</div>
+      <div class="balance-amount" id="premiumStatusDisplay">🔒 не куплен</div>
+    </div>
+    
+    <button class="sidebar-item" id="logoutBtn" style="color:#f87171;">
+      <span class="sidebar-icon">🚪</span>
+      <span>выйти</span>
+    </button>
+  </div>
+
+  <div class="main">
+    <div class="profile-content premium-container">
+      
+      <div class="crown">👑</div>
+      
+      <div class="premium-title">
+        <h1>PREMIUM<br>STATUS SPARK</h1>
+        <div class="premium-sub">PSS — стань легендой</div>
+      </div>
+
+      <div class="reasons-list">
+        <div class="reasons-title">🤔 ПОЧЕМУ ТЫ ДОЛЖЕН КУПИТЬ ЭТО:</div>
+        
+        <div class="reason-item">
+          <div class="reason-emoji">💅</div>
+          <div class="reason-text"><strong>Главная причина:</strong> у твоего друга не будет, а у тебя будет. Хватит ныть.</div>
+        </div>
+        
+        <div class="reason-item">
+          <div class="reason-emoji">🚀</div>
+          <div class="reason-text"><strong>Научный факт:</strong> с PSS ты кликаешь на 15% быстрее (проверено в лаборатории NASA).</div>
+        </div>
+        
+        <div class="reason-item">
+          <div class="reason-emoji">🐧</div>
+          <div class="reason-text"><strong>Пингвины одобрили:</strong> 10 из 10 пингвинов в Антарктиде выбрали бы PSS, если бы у них был интернет.</div>
+        </div>
+        
+        <div class="reason-item">
+          <div class="reason-emoji">😎</div>
+          <div class="reason-text"><strong>Авторитет в районе:</strong> все будут смотреть на тебя с уважением (спойлер: не будут, но повод будет).</div>
+        </div>
+        
+        <div class="reason-item">
+          <div class="reason-emoji">💸</div>
+          <div class="reason-text"><strong>Финансовая грамотность:</strong> потратить деньги на сомнительный статус = лучшая инвестиция в 2024 году.</div>
+        </div>
+      </div>
+
+      <button class="buy-btn" id="buyPremiumBtn">
+        КУПИТЬ PSS 👑
+        <div class="buy-price">всего за $5 — дешевле пиццы</div>
+      </button>
+      
+      <div class="locked-badge" id="premiumStatusFooter">
+        🔒 статус не активирован
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div id="toast" class="toast" style="display:none;"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getDatabase, ref, get, update, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+import { startOnlineHeartbeat } from './app.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAr8MamzQhhvUjZ1VIWvytRheHWjNtiRIM",
+  authDomain: "spark-9e768.firebaseapp.com",
+  databaseURL: "https://spark-9e768-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "spark-9e768",
+  storageBucket: "spark-9e768.firebasestorage.app",
+  messagingSenderId: "660066059407",
+  appId: "1:660066059407:web:0d87f09259e53563555cfa"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const nick = localStorage.getItem('spark_user');
+if (!nick) window.location.href = '/';
+
+const myRef = ref(db, `users/${nick}`);
+
+startOnlineHeartbeat(nick);
+
+let hasPremium = false;
+
+async function loadPremiumStatus() {
+  const snap = await get(myRef);
+  const data = snap.val();
+  hasPremium = data.premium === true;
+  updatePremiumUI();
+}
+loadPremiumStatus();
+
+function updatePremiumUI() {
+  const statusDisplay = document.getElementById('premiumStatusDisplay');
+  const statusFooter = document.getElementById('premiumStatusFooter');
+  
+  if (hasPremium) {
+    statusDisplay.innerHTML = '👑 АКТИВИРОВАН';
+    statusDisplay.style.color = '#facc15';
+    statusFooter.innerHTML = '👑 PSS АКТИВИРОВАН — ты легенда!';
+    statusFooter.style.color = '#facc15';
+    statusFooter.style.background = 'linear-gradient(135deg, #facc15, #ff8c00)';
+    statusFooter.style.color = '#0b0b0b';
+    statusFooter.style.fontWeight = 'bold';
+  } else {
+    statusDisplay.innerHTML = '🔒 не куплен';
+    statusDisplay.style.color = '#f87171';
+    statusFooter.innerHTML = '🔒 статус не активирован';
+    statusFooter.style.color = '#888';
+    statusFooter.style.background = '#2a2a2a';
+  }
+}
+
+// КНОПКА - РАБОЧИЙ ВАРИАНТ
+const buyBtn = document.getElementById('buyPremiumBtn');
+if (buyBtn) {
+  buyBtn.onclick = function(e) {
+    e.preventDefault();
+    if (hasPremium) {
+      showToast('👑 У тебя уже есть PSS! Ты и так легенда, бро!');
+    } else {
+      window.open('https://app.lava.top/products/9dd5ffec-8bf8-4932-a069-edfd8dbfa2ff', '_blank');
+    }
+  };
+}
+
+onValue(myRef, (snap) => {
+  if (snap.exists()) {
+    const data = snap.val();
+    if (data.role === 'owner' || data.role === 'admin' || data.role === 'junior') {
+      document.getElementById('adminSidebarLink').style.display = 'flex';
+    }
+    
+    const newPremium = data.premium === true;
+    if (newPremium !== hasPremium) {
+      hasPremium = newPremium;
+      updatePremiumUI();
+    }
+  }
+});
+
+document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+  await update(myRef, { online: false, status: 'offline', lastSeen: Date.now() });
+  localStorage.removeItem('spark_user');
+  window.location.href = '/';
+});
+
+function showToast(msg) {
+  let toast = document.getElementById('toast');
+  if (!toast) {
+    const div = document.createElement('div');
+    div.id = 'toast';
+    div.className = 'toast';
+    div.style.display = 'block';
+    document.body.appendChild(div);
+    toast = div;
+  }
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 3000);
+}
+</script>
+</body>
+</html>

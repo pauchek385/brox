@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>spark — Flappy Bird</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐦</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1e1e2f, #0f0c1b);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            overflow: hidden;
+        }
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+        canvas {
+            border: 6px solid #34495e;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+            cursor: pointer;
+        }
+        .controls {
+            display: flex;
+            gap: 12px;
+        }
+        .btn-small {
+            padding: 10px 24px;
+            background: #1a1a1a;
+            border: 1px solid #34495e;
+            border-radius: 12px;
+            color: #e4e4e4;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .btn-small:hover {
+            background: #2a2a2a;
+            border-color: #4a6a8e;
+        }
+        .score-board {
+            display: flex;
+            gap: 20px;
+        }
+        .score-card {
+            background: #161616;
+            border-radius: 16px;
+            padding: 10px 24px;
+            text-align: center;
+            border: 1px solid #1f1f1f;
+        }
+        .score-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #555;
+        }
+        .score-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #facc15;
+            line-height: 1;
+        }
+        .score-value.record {
+            color: #4ade80;
+        }
+        @media (max-width: 550px) {
+            .score-value { font-size: 1.3rem; }
+            .score-card { padding: 8px 16px; }
+            .btn-small { padding: 8px 18px; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div class="score-board">
+        <div class="score-card">
+            <div class="score-label">СЧЁТ</div>
+            <div class="score-value" id="currentScore">0</div>
+        </div>
+        <div class="score-card">
+            <div class="score-label">РЕКОРД</div>
+            <div class="score-value record" id="highScore">0</div>
+        </div>
+    </div>
+    
+    <canvas id="gameCanvas" width="450" height="650"></canvas>
+    
+    <div class="controls">
+        <button class="btn-small" id="restartBtn">🔄 рестарт</button>
+        <button class="btn-small" id="backBtn">🏠 в лобби</button>
+    </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getDatabase, ref, get, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+import { startOnlineHeartbeat } from './app.js';
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAr8MamzQhhvUjZ1VIWvytRheHWjNtiRIM",
+    authDomain: "spark-9e768.firebaseapp.com",
+    databaseURL: "https://spark-9e768-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "spark-9e768",
+    storageBucket: "spark-9e768.firebasestorage.app",
+    messagingSenderId: "660066059407",
+    appId: "1:660066059407:web:0d87f09259e53563555cfa"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const nick = localStorage.getItem('spark_user');
+if (!nick) window.location.href = '/';
+
+startOnlineHeartbeat(nick);
+
+// ========== ИГРОВАЯ ЛОГИКА ==========
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+// Игровые настройки
+let birdY = 250;
+let birdX = 70;
+let birdVelocity = 0;
+const gravity = 0.35;
+const jump = -6.5;
+const birdRadius = 18;
+let birdAngle = 0;
+
+let score = 0;
+let gameOver = false;
+let highScore = 0;
+
+// Трубы
+let pipes = [];
+const pipeWidth = 75;
+const pipeGap = 150;
+const pipeSpeed = 3;
+
+// Декор (Облака)
+let clouds = [
+    {x: 50, y: 80, speed: 0.2, size: 40},
+    {x: 250, y: 150, speed: 0.15, size: 30},
+    {x: 400, y: 50, speed: 0.25, size: 35}
+];
+
+// Загрузка рекорда из Firebase
+async function loadHighScore() {
+    const myRef = ref(db, `users/${nick}`);
+    const snap = await get(myRef);
+    const data = snap.val();
+    highScore = data.flappyHighscore || 0;
+    document.getElementById('highScore').textContent = highScore;
+}
+loadHighScore();
+
+// Сохранение рекорда
+async function saveHighScoreToDB(newScore) {
+    if (newScore > highScore) {
+        highScore = newScore;
+        document.getElementById('highScore').textContent = highScore;
+        const myRef = ref(db, `users/${nick}`);
+        await update(myRef, { flappyHighscore: highScore });
+        
+        // Показать уведомление
+        showToast('🏆 НОВЫЙ РЕКОРД! 🏆');
+    }
+}
+
+function showToast(msg) {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+        const div = document.createElement('div');
+        div.id = 'toast';
+        div.className = 'toast';
+        div.style.position = 'fixed';
+        div.style.bottom = '20px';
+        div.style.left = '50%';
+        div.style.transform = 'translateX(-50%)';
+        div.style.background = '#131313';
+        div.style.border = '1px solid #242424';
+        div.style.padding = '12px 24px';
+        div.style.borderRadius = '30px';
+        div.style.fontSize = '0.85rem';
+        div.style.color = '#e4e4e4';
+        div.style.boxShadow = '0 8px 24px rgba(0,0,0,0.8)';
+        div.style.zIndex = '999';
+        div.style.textAlign = 'center';
+        document.body.appendChild(div);
+        toast = div;
+    }
+    toast.textContent = msg;
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 2000);
+}
+
+function spawnPipe() {
+    let minHeight = 60;
+    let maxHeight = canvas.height - pipeGap - 120;
+    let topHeight = Math.floor(Math.random() * (maxHeight - minHeight)) + minHeight;
+    pipes.push({
+        x: canvas.width,
+        top: topHeight,
+        bottom: canvas.height - topHeight - pipeGap - 40,
+        passed: false
+    });
+}
+
+function moveBird() {
+    if (gameOver) {
+        resetGame();
+    } else {
+        birdVelocity = jump;
+        if (navigator.vibrate) navigator.vibrate(30);
+    }
+}
+
+// Управление
+document.addEventListener("keydown", function(e) {
+    if (e.code === "Space" || e.code === "ArrowUp") {
+        e.preventDefault();
+        moveBird();
+    }
+});
+canvas.addEventListener("touchstart", function(e) {
+    e.preventDefault();
+    moveBird();
+}, {passive: false});
+canvas.addEventListener("mousedown", moveBird);
+
+function resetGame() {
+    gameOver = false;
+    birdY = 250;
+    birdVelocity = 0;
+    birdAngle = 0;
+    pipes = [];
+    score = 0;
+    document.getElementById('currentScore').textContent = score;
+    spawnPipe();
+}
+
+// Отрисовка заднего фона
+function drawBackground() {
+    let skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    skyGradient.addColorStop(0, "#4a90e2");
+    skyGradient.addColorStop(0.6, "#d3e7ff");
+    skyGradient.addColorStop(1, "#e8f1f5");
+    ctx.fillStyle = skyGradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+    clouds.forEach(cloud => {
+        cloud.x -= cloud.speed;
+        if (cloud.x + cloud.size * 3 < 0) cloud.x = canvas.width + 20;
+        
+        ctx.beginPath();
+        ctx.arc(cloud.x, cloud.y, cloud.size, 0, Math.PI * 2);
+        ctx.arc(cloud.x + cloud.size * 0.6, cloud.y - cloud.size * 0.4, cloud.size * 0.8, 0, Math.PI * 2);
+        ctx.arc(cloud.x + cloud.size * 1.2, cloud.y, cloud.size * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+    });
+}
+
+function drawPipe(x, y, width, height, isTop) {
+    let pipeGrad = ctx.createLinearGradient(x, 0, x + width, 0);
+    pipeGrad.addColorStop(0, "#1b5e20");
+    pipeGrad.addColorStop(0.2, "#4caf50");
+    pipeGrad.addColorStop(0.7, "#2e7d32");
+    pipeGrad.addColorStop(1, "#1b5e20");
+
+    ctx.fillStyle = pipeGrad;
+    ctx.fillRect(x, y, width, height);
+
+    let rimHeight = 25;
+    let rimX = x - 4;
+    let rimWidth = width + 8;
+    let rimY = isTop ? y + height - rimHeight : y;
+
+    let rimGrad = ctx.createLinearGradient(rimX, 0, rimX + rimWidth, 0);
+    rimGrad.addColorStop(0, "#0d47a1");
+    rimGrad.addColorStop(0, "#1b5e20");
+    rimGrad.addColorStop(0.2, "#81c784");
+    rimGrad.addColorStop(0.8, "#2e7d32");
+    rimGrad.addColorStop(1, "#113d14");
+
+    ctx.fillStyle = rimGrad;
+    ctx.fillRect(rimX, rimY, rimWidth, rimHeight);
+    
+    ctx.strokeStyle = "#0b260d";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, width, height);
+    ctx.strokeRect(rimX, rimY, rimWidth, rimHeight);
+}
+
+function drawBird() {
+    ctx.save();
+    ctx.translate(birdX, birdY);
+    
+    birdAngle = Math.min(Math.PI / 4, Math.max(-Math.PI / 7, birdVelocity * 0.06));
+    ctx.rotate(birdAngle);
+
+    let bodyGrad = ctx.createRadialGradient(-2, -2, 2, 0, 0, birdRadius);
+    bodyGrad.addColorStop(0, "#fff799");
+    bodyGrad.addColorStop(0.4, "#ffca28");
+    bodyGrad.addColorStop(1, "#f57c00");
+    
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, birdRadius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#5d4037";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.arc(6, -5, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#1e1e2f";
+    ctx.beginPath();
+    ctx.arc(8, -5, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    let beakGrad = ctx.createLinearGradient(12, -2, 24, 4);
+    beakGrad.addColorStop(0, "#ff7043");
+    beakGrad.addColorStop(1, "#d84315");
+    ctx.fillStyle = beakGrad;
+    ctx.beginPath();
+    ctx.moveTo(12, -4);
+    ctx.lineTo(25, 1);
+    ctx.lineTo(11, 6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(-6, 2);
+    let wingWave = Math.sin(Date.now() * 0.015) * 3;
+    ctx.rotate(wingWave * Math.PI / 180);
+    
+    let wingGrad = ctx.createLinearGradient(-10, -5, 5, 5);
+    wingGrad.addColorStop(0, "#fff176");
+    wingGrad.addColorStop(1, "#f57c00");
+    ctx.fillStyle = wingGrad;
+    
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 10, 7, Math.PI/6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.restore();
+}
+
+function drawGround() {
+    let groundY = canvas.height - 40;
+    
+    let groundGrad = ctx.createLinearGradient(0, groundY, 0, canvas.height);
+    groundGrad.addColorStop(0, "#8d6e63");
+    groundGrad.addColorStop(1, "#4e342e");
+    ctx.fillStyle = groundGrad;
+    ctx.fillRect(0, groundY, canvas.width, 40);
+
+    ctx.fillStyle = "#9ccc65";
+    ctx.fillRect(0, groundY, canvas.width, 6);
+    
+    ctx.fillStyle = "#7cb342";
+    for (let i = 0; i < canvas.width; i += 15) {
+        ctx.beginPath();
+        ctx.moveTo(i, groundY);
+        ctx.lineTo(i + 5, groundY - 6);
+        ctx.lineTo(i + 10, groundY);
+        ctx.fill();
+    }
+}
+
+// Главный игровой цикл
+function gameLoop() {
+    if (gameOver) {
+        ctx.fillStyle = "rgba(15, 12, 27, 0.7)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 34px 'Inter', Arial";
+        ctx.shadowColor = "rgba(0,0,0,0.5)";
+        ctx.shadowBlur = 10;
+        ctx.textAlign = "center";
+        ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 30);
+        
+        ctx.fillStyle = "#ffca28";
+        ctx.font = "600 24px 'Inter', Arial";
+        ctx.fillText(`счёт: ${score}`, canvas.width / 2, canvas.height / 2 + 15);
+        
+        ctx.fillStyle = "#e0e0e0";
+        ctx.font = "14px 'Inter', Arial";
+        ctx.fillText("нажми на экран или пробел для рестарта", canvas.width / 2, canvas.height / 2 + 65);
+        
+        ctx.shadowBlur = 0;
+        requestAnimationFrame(gameLoop);
+        return;
+    }
+
+    drawBackground();
+
+    birdVelocity += gravity;
+    birdY += birdVelocity;
+
+    if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 220) {
+        spawnPipe();
+    }
+
+    for (let i = pipes.length - 1; i >= 0; i--) {
+        pipes[i].x -= pipeSpeed;
+
+        drawPipe(pipes[i].x, 0, pipeWidth, pipes[i].top, true);
+        drawPipe(pipes[i].x, canvas.height - pipes[i].bottom, pipeWidth, pipes[i].bottom, false);
+
+        let closestX = Math.max(pipes[i].x, Math.min(birdX, pipes[i].x + pipeWidth));
+        
+        let closestYTop = Math.min(birdY, pipes[i].top);
+        let distanceTop = Math.hypot(birdX - closestX, birdY - closestYTop);
+        
+        let closestYBottom = Math.max(birdY, canvas.height - pipes[i].bottom);
+        let distanceBottom = Math.hypot(birdX - closestX, birdY - closestYBottom);
+
+        if (distanceTop < birdRadius - 2 || distanceBottom < birdRadius - 2) {
+            gameOver = true;
+            saveHighScoreToDB(score);
+            if (navigator.vibrate) navigator.vibrate(200);
+        }
+
+        if (!pipes[i].passed && pipes[i].x + pipeWidth < birdX) {
+            score++;
+            document.getElementById('currentScore').textContent = score;
+            pipes[i].passed = true;
+            if (navigator.vibrate) navigator.vibrate(40);
+        }
+
+        if (pipes[i].x + pipeWidth < 0) {
+            pipes.splice(i, 1);
+        }
+    }
+
+    drawBird();
+    drawGround();
+
+    if (birdY + birdRadius > canvas.height - 40 || birdY - birdRadius < 0) {
+        gameOver = true;
+        saveHighScoreToDB(score);
+        if (navigator.vibrate) navigator.vibrate(200);
+    }
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 42px 'Inter', Arial";
+    ctx.textAlign = "center";
+    ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
+    ctx.shadowBlur = 6;
+    ctx.fillText(score, canvas.width / 2, 65);
+    ctx.shadowBlur = 0;
+
+    requestAnimationFrame(gameLoop);
+}
+
+// Кнопки
+document.getElementById('restartBtn').addEventListener('click', () => {
+    resetGame();
+});
+
+document.getElementById('backBtn').addEventListener('click', () => {
+    window.location.href = '/lobby';
+});
+
+// Старт
+spawnPipe();
+gameLoop();
+</script>
+</body>
+</html>
