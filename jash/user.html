@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>spark — игрок</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="layout">
+  
+  <div class="sidebar">
+    <div class="sidebar-logo">spark</div>
+    <a href="/profile" class="sidebar-item">
+      <span class="sidebar-icon">😎</span>
+      <span>профиль</span>
+    </a>
+    <a href="/friends" class="sidebar-item">
+      <span class="sidebar-icon">🍋‍🟩</span>
+      <span>друзья</span>
+    </a>
+    <a href="/lobby" class="sidebar-item">
+      <span class="sidebar-icon">⚔️</span>
+      <span>лобби</span>
+    </a>
+    <div class="sidebar-divider"></div>
+    <a href="/shop" class="sidebar-item">
+      <span class="sidebar-icon">👑</span>
+      <span>PSS</span>
+    </a>
+    <a href="/admin" class="sidebar-item" id="adminSidebarLink" style="display:none;">
+      <span class="sidebar-icon">🛡️</span>
+      <span>админка</span>
+    </a>
+    
+    <button class="sidebar-item" id="logoutBtn" style="color:#f87171;">
+      <span class="sidebar-icon">🚪</span>
+      <span>выйти</span>
+    </button>
+  </div>
+
+  <div class="main">
+    <div class="profile-content">
+      
+      <div class="profile-head">
+        <div class="profile-avatar" id="userAvatar"></div>
+        <div class="profile-info">
+          <h1 class="profile-nick" id="userNick"></h1>
+          <div class="profile-status">
+            <span class="status-dot" id="userStatusDot"></span>
+            <span class="profile-status-text" id="userStatusText"></span>
+          </div>
+          <div id="premiumBadge" style="display:none;">
+            <div class="premium-super-badge">👑 СУПЕР МЕГА КРУТОЙ ПРЕМИУМ ИГРОК 👑</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <span class="stat-icon">🏆</span>
+          <span class="stat-num" id="statWins">0</span>
+          <span class="stat-label">побед</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-icon">💀</span>
+          <span class="stat-num" id="statLosses">0</span>
+          <span class="stat-label">поражений</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-icon">⭐</span>
+          <span class="stat-num" id="statRating">1000</span>
+          <span class="stat-label">рейтинг</span>
+        </div>
+      </div>
+
+      <div id="actionButtons" style="display:flex;gap:8px;"></div>
+
+      <button class="btn ghost w-full mt-2" onclick="window.history.back()">← назад</button>
+
+    </div>
+  </div>
+
+</div>
+
+<div id="toast" class="toast" style="display:none;"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getDatabase, ref, get, set, update, onValue, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+import { startOnlineHeartbeat, checkUserOnlineStatus } from './app.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAr8MamzQhhvUjZ1VIWvytRheHWjNtiRIM",
+  authDomain: "spark-9e768.firebaseapp.com",
+  databaseURL: "https://spark-9e768-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "spark-9e768",
+  storageBucket: "spark-9e768.firebasestorage.app",
+  messagingSenderId: "660066059407",
+  appId: "1:660066059407:web:0d87f09259e53563555cfa"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const myNick = localStorage.getItem('spark_user');
+if (!myNick) window.location.href = '/';
+
+startOnlineHeartbeat(myNick);
+
+const urlParams = new URLSearchParams(window.location.search);
+const targetNick = urlParams.get('nick');
+
+if (!targetNick || targetNick === myNick) {
+  window.location.href = '/profile';
+}
+
+const targetRef = ref(db, `users/${targetNick}`);
+const myRef = ref(db, `users/${myNick}`);
+
+onValue(myRef, (snap) => {
+  if (snap.exists()) {
+    const data = snap.val();
+    if (data.role === 'owner' || data.role === 'admin' || data.role === 'junior') {
+      document.getElementById('adminSidebarLink').style.display = 'flex';
+    }
+  }
+});
+
+document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+  await update(myRef, { online: false, status: 'offline', lastSeen: Date.now() });
+  localStorage.removeItem('spark_user');
+  window.location.href = '/';
+});
+
+// ========== ЗАГРУЗКА ПРОФИЛЯ ИГРОКА ==========
+async function loadProfile() {
+  const snap = await get(targetRef);
+  if (!snap.exists()) {
+    document.getElementById('userNick').textContent = targetNick;
+    document.getElementById('userAvatar').textContent = '👤';
+    document.getElementById('userStatusText').textContent = 'не найден';
+    document.getElementById('userStatusDot').className = 'status-dot offline';
+    return;
+  }
+
+  const data = snap.val();
+  const isPremium = data.premium === true;
+  
+  const nickElement = document.getElementById('userNick');
+  const avatarElement = document.getElementById('userAvatar');
+  
+  // Применяем премиум стили если есть
+  if (isPremium) {
+    document.getElementById('premiumBadge').style.display = 'block';
+    nickElement.classList.add('premium-nick');
+    nickElement.innerHTML = '<span class="premium-icon"></span>' + (data.nick || targetNick);
+    avatarElement.style.border = '2px solid #facc15';
+    avatarElement.style.boxShadow = '0 0 15px rgba(250, 204, 21, 0.5)';
+  } else {
+    nickElement.classList.remove('premium-nick');
+    nickElement.innerHTML = data.nick || targetNick;
+    avatarElement.style.border = '2px solid #2a2a2a';
+    avatarElement.style.boxShadow = 'none';
+  }
+  
+  avatarElement.textContent = data.emoji || '😎';
+  
+  const onlineStatus = await checkUserOnlineStatus(targetNick);
+  updateStatusDisplay(onlineStatus);
+  
+  document.getElementById('statWins').textContent = data.wins || 0;
+  document.getElementById('statLosses').textContent = data.losses || 0;
+  document.getElementById('statRating').textContent = data.rating || 1000;
+
+  onValue(targetRef, async (snap2) => {
+    if (snap2.exists()) {
+      const freshStatus = await checkUserOnlineStatus(targetNick);
+      updateStatusDisplay(freshStatus);
+    }
+  });
+
+  // Кнопки действий
+  const mySnap = await get(myRef);
+  const myData = mySnap.val() || {};
+  const myFriends = myData.friends || {};
+  const myRequests = myData.friendRequests || {};
+  const targetRequests = data.friendRequests || {};
+
+  const actionDiv = document.getElementById('actionButtons');
+  actionDiv.innerHTML = '';
+
+  if (myFriends[targetNick]) {
+    actionDiv.innerHTML = `
+      <button class="btn ghost" style="flex:1; color:#f87171;" id="removeFriendBtn">удалить из друзей</button>
+      <button class="btn" style="flex:1;" id="challengeBtn">вызвать</button>
+    `;
+    document.getElementById('removeFriendBtn').addEventListener('click', async () => {
+      await remove(ref(db, `users/${myNick}/friends/${targetNick}`));
+      await remove(ref(db, `users/${targetNick}/friends/${myNick}`));
+      showToast(`${targetNick} удалён из друзей`);
+      loadProfile();
+    });
+  } else if (targetRequests[myNick]) {
+    actionDiv.innerHTML = `<button class="btn ghost w-full" disabled style="opacity:0.5;">запрос отправлен</button>`;
+  } else if (myRequests[targetNick]) {
+    actionDiv.innerHTML = `
+      <button class="btn" style="flex:1; background:#4ade80; color:#0b0b0b;" id="acceptRequestBtn">принять запрос</button>
+      <button class="btn danger" style="flex:1;" id="declineRequestBtn">отклонить</button>
+    `;
+    document.getElementById('acceptRequestBtn').addEventListener('click', async () => {
+      await set(ref(db, `users/${myNick}/friends/${targetNick}`), true);
+      await set(ref(db, `users/${targetNick}/friends/${myNick}`), true);
+      await remove(ref(db, `users/${myNick}/friendRequests/${targetNick}`));
+      showToast(`${targetNick} теперь твой друг`);
+      loadProfile();
+    });
+    document.getElementById('declineRequestBtn').addEventListener('click', async () => {
+      await remove(ref(db, `users/${myNick}/friendRequests/${targetNick}`));
+      showToast(`запрос от ${targetNick} отклонён`);
+      loadProfile();
+    });
+  } else {
+    actionDiv.innerHTML = `
+      <button class="btn" style="flex:1;" id="addFriendBtn">добавить в друзья</button>
+      <button class="btn ghost" style="flex:1;" id="challengeBtn">вызвать</button>
+    `;
+    document.getElementById('addFriendBtn').addEventListener('click', async () => {
+      await set(ref(db, `users/${targetNick}/friendRequests/${myNick}`), true);
+      showToast(`запрос в друзья отправлен ${targetNick}`);
+      loadProfile();
+    });
+  }
+
+  const challengeBtn = document.getElementById('challengeBtn');
+  if (challengeBtn) {
+    challengeBtn.addEventListener('click', () => {
+      window.location.href = `/lobby?challenge=${targetNick}`;
+    });
+  }
+}
+
+function updateStatusDisplay(status) {
+  const dot = document.getElementById('userStatusDot');
+  const text = document.getElementById('userStatusText');
+  dot.className = 'status-dot';
+  
+  if (status === 'online') {
+    dot.classList.add('online');
+    text.textContent = 'в сети';
+  } else if (status === 'afk') {
+    dot.classList.add('afk');
+    text.textContent = 'афк';
+  } else {
+    dot.classList.add('offline');
+    text.textContent = 'не в сети';
+  }
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  setTimeout(() => toast.style.display = 'none', 2000);
+}
+
+loadProfile();
+</script>
+</body>
+</html>
