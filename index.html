@@ -34,8 +34,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow-y: auto;
       padding: 20px;
+      overflow-y: auto;
     }
 
     body::before {
@@ -49,7 +49,8 @@
 
     .auth-container {
       width: 100%;
-      max-width: 500px;
+      max-width: 460px;
+      margin: auto;
     }
 
     .auth-card {
@@ -57,7 +58,7 @@
       backdrop-filter: blur(40px);
       border: 1px solid var(--border);
       border-radius: 35px;
-      padding: 50px 40px;
+      padding: 45px 35px;
       box-shadow: 0 30px 60px rgba(0,0,0,0.6);
       animation: float 0.6s cubic-bezier(0.19,1,0.22,1);
     }
@@ -69,11 +70,11 @@
 
     .logo {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 42px;
+      font-size: 38px;
       font-weight: 900;
       letter-spacing: 8px;
       text-align: center;
-      margin-bottom: 15px;
+      margin-bottom: 8px;
       background: linear-gradient(135deg, #fff 20%, var(--accent-glow));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -83,20 +84,20 @@
     .subtitle {
       text-align: center;
       color: var(--text-dim);
-      font-size: 15px;
-      margin-bottom: 40px;
+      font-size: 14px;
+      margin-bottom: 35px;
     }
 
     .input-group {
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
 
     .input-label {
-      font-size: 13px;
+      font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 2px;
       color: var(--text-dim);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       font-weight: 700;
     }
 
@@ -104,10 +105,10 @@
       width: 100%;
       background: rgba(255,255,255,0.03);
       border: 1px solid var(--border);
-      padding: 16px 20px;
-      border-radius: 16px;
+      padding: 15px 18px;
+      border-radius: 14px;
       color: #fff;
-      font-size: 16px;
+      font-size: 15px;
       font-family: 'Inter', sans-serif;
       transition: 0.3s;
     }
@@ -118,49 +119,47 @@
       box-shadow: 0 0 20px rgba(157,78,221,0.15);
     }
 
-    /* ТЁМНЫЕ ВЫПАДАЮЩИЕ СПИСКИ */
     select.input-field {
       appearance: none;
-      background-color: rgba(18, 9, 32, 0.95); /* тёмный фон */
+      background-color: #0f0f1a;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237d7d7d' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
-      background-position: right 20px center;
+      background-position: right 15px center;
       cursor: pointer;
-      color: #fff;
     }
 
     select.input-field option {
-      background: #1a1a2e; /* тёмный фон пунктов */
+      background: #1a1a2e;
       color: #fff;
     }
 
     .birthday-row {
       display: grid;
       grid-template-columns: 1fr 1fr 1.2fr;
-      gap: 15px;
+      gap: 12px;
     }
 
     .gender-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 15px;
-      margin-top: 30px;
+      margin-top: 25px;
     }
 
     .gender-btn {
-      padding: 20px;
-      border-radius: 20px;
+      padding: 18px;
+      border-radius: 18px;
       border: 2px solid var(--border);
       background: rgba(255,255,255,0.02);
       color: var(--text-dim);
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 700;
       cursor: pointer;
       transition: 0.3s;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
+      gap: 10px;
       font-family: 'Inter', sans-serif;
     }
 
@@ -178,7 +177,7 @@
     }
 
     .gender-btn .gender-icon {
-      font-size: 28px;
+      font-size: 26px;
     }
 
     .auth-btn {
@@ -192,7 +191,7 @@
       font-size: 16px;
       cursor: pointer;
       transition: 0.3s;
-      margin-top: 30px;
+      margin-top: 28px;
       font-family: 'Inter', sans-serif;
     }
 
@@ -205,7 +204,7 @@
 
     .toggle-text {
       text-align: center;
-      margin-top: 25px;
+      margin-top: 22px;
       color: var(--text-dim);
       font-size: 14px;
     }
@@ -241,52 +240,10 @@
       display: none;
     }
 
-    .divider {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      margin: 30px 0;
-    }
-
-    .divider-line {
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-
-    .divider-text {
-      color: var(--text-dim);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-    }
-
-    .google-btn {
-      width: 100%;
-      padding: 14px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      color: #fff;
-      font-weight: 700;
-      font-size: 15px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      transition: 0.3s;
-      font-family: 'Inter', sans-serif;
-    }
-
-    .google-btn:hover {
-      background: rgba(255,255,255,0.06);
-      border-color: var(--accent);
-    }
-
-    @media (max-width: 500px) {
-      .auth-card { padding: 40px 25px; }
-      .birthday-row { grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    @media (max-height: 750px) {
+      .auth-card { padding: 35px 30px; }
+      .logo { font-size: 32px; }
+      .subtitle { margin-bottom: 25px; }
     }
   </style>
 </head>
@@ -300,15 +257,9 @@
     <div class="error-message" id="error-message"></div>
     <div class="success-message" id="success-message"></div>
 
-    <!-- ФОРМА (меняется в зависимости от режима) -->
     <form id="auth-form">
-      <!-- Поле ника (только для регистрации) -->
-      <div class="input-group" id="username-group" style="display:none;">
-        <div class="input-label">НИКНЕЙМ</div>
-        <input type="text" class="input-field" id="username" placeholder="Твой ник">
-      </div>
 
-      <!-- Дата рождения (только для регистрации) -->
+      <!-- ДАТА РОЖДЕНИЯ (только регистрация) -->
       <div id="birthday-group" style="display:none;">
         <div class="input-group">
           <div class="input-label">Дата рождения</div>
@@ -324,9 +275,29 @@
             <select class="input-field" id="year"><option value="">Год</option></select>
           </div>
         </div>
+      </div>
 
-        <!-- Гендер (только для регистрации) -->
-        <div class="input-label">ПОЛ</div>
+      <!-- НИК (только регистрация) -->
+      <div class="input-group" id="username-group" style="display:none;">
+        <div class="input-label">Никнейм</div>
+        <input type="text" class="input-field" id="username" placeholder="Твой ник">
+      </div>
+
+      <!-- EMAIL -->
+      <div class="input-group">
+        <div class="input-label">Email</div>
+        <input type="email" class="input-field" id="email" placeholder="brox@example.com" required>
+      </div>
+
+      <!-- ПАРОЛЬ -->
+      <div class="input-group">
+        <div class="input-label">Пароль</div>
+        <input type="password" class="input-field" id="password" placeholder="Минимум 6 символов" minlength="6" required>
+      </div>
+
+      <!-- ГЕНДЕР (только регистрация) -->
+      <div id="gender-group" style="display:none;">
+        <div class="input-label">Пол</div>
         <div class="gender-row">
           <button type="button" class="gender-btn" id="gender-male" onclick="selectGender('male')">
             <span class="gender-icon">👦</span> Парень
@@ -338,36 +309,13 @@
         <input type="hidden" id="gender" value="">
       </div>
 
-      <!-- Email -->
-      <div class="input-group">
-        <div class="input-label">EMAIL</div>
-        <input type="email" class="input-field" id="email" placeholder="brox@example.com" required>
-      </div>
-
-      <!-- Пароль -->
-      <div class="input-group">
-        <div class="input-label">ПАРОЛЬ</div>
-        <input type="password" class="input-field" id="password" placeholder="Минимум 6 символов" minlength="6" required>
-      </div>
-
       <button type="submit" class="auth-btn" id="submit-btn">ВОЙТИ</button>
     </form>
 
-    <!-- Переключение режимов -->
     <div class="toggle-text">
       <span id="toggle-text">Нет аккаунта?</span>
       <span class="toggle-link" id="toggle-link" onclick="toggleMode()">Создать</span>
     </div>
-
-    <!-- Google -->
-    <div class="divider">
-      <div class="divider-line"></div>
-      <div class="divider-text">или</div>
-      <div class="divider-line"></div>
-    </div>
-    <button class="google-btn" onclick="googleSignIn()">
-      <span style="font-size:20px;">🔵</span> Войти через Google
-    </button>
   </div>
 </div>
 
@@ -385,7 +333,7 @@
   const auth = firebase.auth();
   const db   = firebase.database();
 
-  // ========== ЗАПОЛНЕНИЕ ДНЕЙ И ЛЕТ ==========
+  // ========== ДНИ И ГОДЫ ==========
   const daySelect = document.getElementById('day');
   for (let i = 1; i <= 31; i++) {
     const opt = document.createElement('option');
@@ -402,20 +350,22 @@
 
   // ========== РЕЖИМЫ ==========
   let isLogin = true;
-  const submitBtn    = document.getElementById('submit-btn');
-  const subtitle     = document.getElementById('subtitle');
-  const toggleText   = document.getElementById('toggle-text');
-  const toggleLink   = document.getElementById('toggle-link');
-  const usernameGrp  = document.getElementById('username-group');
-  const birthdayGrp  = document.getElementById('birthday-group');
-  const errorMsg     = document.getElementById('error-message');
-  const successMsg   = document.getElementById('success-message');
+  const submitBtn   = document.getElementById('submit-btn');
+  const subtitle    = document.getElementById('subtitle');
+  const toggleText  = document.getElementById('toggle-text');
+  const toggleLink  = document.getElementById('toggle-link');
+  const usernameGrp = document.getElementById('username-group');
+  const birthdayGrp = document.getElementById('birthday-group');
+  const genderGrp   = document.getElementById('gender-group');
+  const errorMsg    = document.getElementById('error-message');
+  const successMsg  = document.getElementById('success-message');
 
   function toggleMode() {
     isLogin = !isLogin;
     if (isLogin) {
       usernameGrp.style.display = 'none';
       birthdayGrp.style.display = 'none';
+      genderGrp.style.display = 'none';
       submitBtn.textContent = 'ВОЙТИ';
       subtitle.textContent = 'Добро пожаловать в новую эру';
       toggleText.textContent = 'Нет аккаунта?';
@@ -423,6 +373,7 @@
     } else {
       usernameGrp.style.display = 'block';
       birthdayGrp.style.display = 'block';
+      genderGrp.style.display = 'block';
       submitBtn.textContent = 'ЗАРЕГИСТРИРОВАТЬСЯ';
       subtitle.textContent = 'Создай свой аккаунт BROX';
       toggleText.textContent = 'Уже есть аккаунт?';
@@ -432,21 +383,12 @@
   }
 
   function showError(msg) {
-    errorMsg.textContent = msg;
-    errorMsg.style.display = 'block';
-    successMsg.style.display = 'none';
+    errorMsg.textContent = msg; errorMsg.style.display = 'block'; successMsg.style.display = 'none';
   }
-
   function showSuccess(msg) {
-    successMsg.textContent = msg;
-    successMsg.style.display = 'block';
-    errorMsg.style.display = 'none';
+    successMsg.textContent = msg; successMsg.style.display = 'block'; errorMsg.style.display = 'none';
   }
-
-  function hideMessages() {
-    errorMsg.style.display = 'none';
-    successMsg.style.display = 'none';
-  }
+  function hideMessages() { errorMsg.style.display = 'none'; successMsg.style.display = 'none'; }
 
   function selectGender(gender) {
     document.getElementById('gender').value = gender;
@@ -456,7 +398,7 @@
     if (gender === 'female') document.getElementById('gender-female').classList.add('selected');
   }
 
-  // ========== СОХРАНЕНИЕ В БД ==========
+  // ========== СОХРАНЕНИЕ ==========
   async function saveUserToDB(user, extra = {}) {
     const userData = {
       email: user.email,
@@ -469,74 +411,40 @@
     await db.ref('users/' + user.uid).set(userData);
   }
 
-  // ========== ОТПРАВКА ФОРМЫ ==========
+  // ========== ОТПРАВКА ==========
   document.getElementById('auth-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     hideMessages();
-
-    const email    = document.getElementById('email').value.trim();
+    const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value.trim();
-    const username = document.getElementById('username').value.trim();
-
-    if (password.length < 6) {
-      showError('Пароль должен быть не менее 6 символов');
-      return;
-    }
+    if (password.length < 6) { showError('Пароль должен быть не менее 6 символов'); return; }
 
     try {
       if (isLogin) {
         await auth.signInWithEmailAndPassword(email, password);
-        showSuccess('Вход выполнен! Переадресация...');
+        showSuccess('Вход выполнен!');
         setTimeout(() => { window.location.href = 'home.html'; }, 1500);
       } else {
-        // Регистрация
+        const username = document.getElementById('username').value.trim();
         if (!username) { showError('Придумай никнейм'); return; }
-        const day   = document.getElementById('day').value;
+        const day = document.getElementById('day').value;
         const month = document.getElementById('month').value;
-        const year  = document.getElementById('year').value;
+        const year = document.getElementById('year').value;
         const gender = document.getElementById('gender').value;
         if (!day || !month || !year) { showError('Выбери дату рождения'); return; }
         if (!gender) { showError('Выбери пол'); return; }
 
         const userCred = await auth.createUserWithEmailAndPassword(email, password);
-        await saveUserToDB(userCred.user, {
-          username,
-          birthday: { day, month, year },
-          gender
-        });
-        showSuccess('Аккаунт создан! Добро пожаловать в BROX');
+        await saveUserToDB(userCred.user, { username, birthday: { day, month, year }, gender });
+        showSuccess('Аккаунт создан!');
         setTimeout(() => { window.location.href = 'home.html'; }, 1500);
       }
     } catch (err) {
-      console.error(err);
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        showError('Неверный email или пароль');
-      } else if (err.code === 'auth/email-already-in-use') {
-        showError('Этот email уже используется');
-      } else {
-        showError('Ошибка: ' + err.message);
-      }
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') showError('Неверный email или пароль');
+      else if (err.code === 'auth/email-already-in-use') showError('Этот email уже используется');
+      else showError('Ошибка: ' + err.message);
     }
   });
-
-  // ========== GOOGLE ==========
-  async function googleSignIn() {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    try {
-      const result = await auth.signInWithPopup(provider);
-      const user = result.user;
-      const snap = await db.ref('users/' + user.uid).once('value');
-      if (!snap.exists()) {
-        await saveUserToDB(user, { username: user.displayName || 'Игрок' });
-      }
-      showSuccess('Вход через Google выполнен!');
-      setTimeout(() => { window.location.href = 'home.html'; }, 1500);
-    } catch (err) {
-      console.error(err);
-      showError('Ошибка входа через Google');
-    }
-  }
-  window.googleSignIn = googleSignIn;
 </script>
 </body>
 </html>
