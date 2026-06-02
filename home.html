@@ -89,6 +89,52 @@
     .friend-card:hover .friend-name { color:#fff; transform:translateY(-2px); }
     .add-friend .avatar-wrap { background:var(--glass-bright); border:2px dashed var(--glass-border); }
     .add-friend:hover .avatar-wrap { border-color:var(--accent-glow); background:rgba(157,78,221,0.05); }
+
+    /* ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ DISCOVERY */
+    .category-tabs { display:flex; gap:12px; margin-bottom:40px; flex-wrap:wrap; }
+    .tab-btn {
+      padding:12px 24px; border-radius:99px; border:1px solid var(--glass-border);
+      background:transparent; color:var(--text-dim); font-size:14px;
+      font-weight:700; cursor:pointer; transition:var(--transition-bounce);
+    }
+    .tab-btn:hover { color:#fff; border-color:var(--glass-bright); }
+    .tab-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 0 30px rgba(157,78,221,0.4); }
+    .discovery-grid {
+      display:flex; gap:30px; overflow-x:auto; overflow-y:visible;
+      padding:10px 0 30px;
+    }
+    .discovery-grid::-webkit-scrollbar { height:4px; background:transparent; }
+    .discovery-grid::-webkit-scrollbar-thumb { background:var(--glass-border); border-radius:10px; }
+    .discovery-card {
+      min-width:300px; background:var(--bg-card); border:1px solid var(--glass-border);
+      border-radius:var(--radius-md); overflow:hidden; cursor:pointer;
+      transition:var(--transition-main); flex-shrink:0; z-index:1;
+    }
+    .discovery-card:hover { transform:translateY(-10px); border-color:var(--accent); z-index:10; }
+    .disc-thumb { height:160px; background-size:cover; background-position:center; position:relative; }
+    .disc-thumb::after { content:''; position:absolute; inset:0; background:linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.8)); }
+    .disc-body { padding:25px; }
+    .disc-category { font-size:11px; text-transform:uppercase; letter-spacing:3px; color:var(--accent-glow); font-weight:800; margin-bottom:8px; }
+    .disc-title { font-size:20px; font-weight:800; margin-bottom:10px; }
+    .disc-desc { font-size:14px; color:var(--text-dim); line-height:1.6; margin-bottom:20px; }
+    .disc-footer { display:flex; justify-content:space-between; align-items:center; }
+    .disc-players { font-size:13px; color:var(--text-mute); font-family:'JetBrains Mono'; }
+    .disc-rating { font-size:13px; color:var(--coin); font-weight:700; }
+    .mini-discovery-grid {
+      display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));
+      gap:20px; width:100%;
+    }
+    .mini-card {
+      background:var(--bg-card); border:1px solid var(--glass-border);
+      border-radius:18px; overflow:hidden; cursor:pointer;
+      transition:var(--transition-main); text-align:center;
+    }
+    .mini-card:hover { transform:translateY(-8px); border-color:var(--accent); }
+    .mini-thumb { height:90px; background-size:cover; background-position:center; }
+    .mini-body { padding:12px; }
+    .mini-title { font-size:14px; font-weight:700; margin-bottom:4px; }
+    .mini-meta { font-size:11px; color:var(--text-dim); }
+
     .scroll-container { position:relative; width:100%; }
     .scroll-btn { position:absolute; top:50%; transform:translateY(-50%); background:rgba(18,9,32,0.8); border:1px solid var(--glass-border); color:var(--text-dim); width:44px; height:44px; border-radius:50%; font-size:20px; cursor:pointer; z-index:10; transition:0.3s; display:flex; align-items:center; justify-content:center; }
     .scroll-btn:hover { color:#fff; background:var(--accent); border-color:var(--accent); }
@@ -228,6 +274,84 @@
       renderRealGames();
     }
 
+    // ========== Рендер Discovery (из Firebase) ==========
+    function renderDiscovery() {
+      const container = document.getElementById('view-container');
+      container.innerHTML = `
+        <div class="view active" id="view-discovery">
+          <div class="view-title">Discover</div>
+          <div class="category-tabs" id="discTabs">
+            <button class="tab-btn active" data-cat="all">All</button>
+            <button class="tab-btn" data-cat="racing">Racing</button>
+            <button class="tab-btn" data-cat="rpg">RPG</button>
+            <button class="tab-btn" data-cat="action">Action</button>
+            <button class="tab-btn" data-cat="survival">Survival</button>
+            <button class="tab-btn" data-cat="social">Social</button>
+          </div>
+          <div class="label-wrap"><span class="section-label">Рекомендации</span><div class="line-dec"></div></div>
+          <div class="scroll-container">
+            <button class="scroll-btn left" onclick="document.getElementById('discGrid').scrollBy({left:-330,behavior:'smooth'})">❮</button>
+            <button class="scroll-btn right" onclick="document.getElementById('discGrid').scrollBy({left:330,behavior:'smooth'})">❯</button>
+            <div class="discovery-grid" id="discGrid"></div>
+          </div>
+          <div class="label-wrap" style="margin-top:40px;"><span class="section-label">Все игры</span><div class="line-dec"></div></div>
+          <div class="mini-discovery-grid" id="miniDiscGrid"></div>
+        </div>
+      `;
+      
+      // Подключаем логику Discovery
+      loadDiscovery('all');
+      
+      document.getElementById('discTabs').addEventListener('click', e => {
+        const btn = e.target.closest('.tab-btn');
+        if (!btn) return;
+        document.querySelectorAll('#discTabs .tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        loadDiscovery(btn.dataset.cat);
+      });
+    }
+
+    function loadDiscovery(category = 'all') {
+      db.ref('games').once('value', snap => {
+        const allGames = snap.exists() ? Object.values(snap.val()) : [];
+        const filtered = category === 'all' ? allGames : allGames.filter(g => g.cat === category);
+
+        // Рекомендации
+        const recGrid = document.getElementById('discGrid');
+        if (recGrid) {
+          const recommended = filtered.slice(0, 6);
+          recGrid.innerHTML = recommended.map(g => `
+            <div class="discovery-card" onclick="pushToast('Запуск ${g.title}...')">
+              <div class="disc-thumb ${g.thumb || 'img-u1'}"></div>
+              <div class="disc-body">
+                <div class="disc-category">${g.cat || 'game'}</div>
+                <div class="disc-title">${g.title}</div>
+                <div class="disc-desc">${g.desc || 'Описание скоро появится'}</div>
+                <div class="disc-footer">
+                  <div class="disc-players">🟢 ${(g.players || 0).toLocaleString()}</div>
+                  <div class="disc-rating">⭐ ${g.rating || 0}</div>
+                </div>
+              </div>
+            </div>
+          `).join('') || '<div style="color:var(--text-dim); padding:20px;">Нет игр в этой категории</div>';
+        }
+
+        // Мини-сетка
+        const miniGrid = document.getElementById('miniDiscGrid');
+        if (miniGrid) {
+          miniGrid.innerHTML = filtered.map(g => `
+            <div class="mini-card" onclick="pushToast('Запуск ${g.title}...')">
+              <div class="mini-thumb ${g.thumb || 'img-u1'}"></div>
+              <div class="mini-body">
+                <div class="mini-title">${g.title}</div>
+                <div class="mini-meta">⭐ ${g.rating || 0} · ${(g.players || 0).toLocaleString()}</div>
+              </div>
+            </div>
+          `).join('') || '<div style="color:var(--text-dim); padding:20px; grid-column:1/-1;">Нет игр</div>';
+        }
+      });
+    }
+
     // ========== Друзья из Firebase ==========
     function listenToFriends() {
       const row = document.getElementById('realtime-friends');
@@ -280,22 +404,8 @@
       if (!grid) return;
 
       const games = [
-        {
-          id: 'flappy',
-          title: '🐦 Flappy Bird',
-          thumb: 'img-u1',
-          players: 12400,
-          rating: 4.8,
-          url: '/game-flappy'
-        },
-        {
-          id: 'casino',
-          title: '🎰 УДАЧА',
-          thumb: 'img-u2',
-          players: 8900,
-          rating: 4.6,
-          url: '/game-casino'
-        }
+        { id: 'flappy', title: '🐦 Flappy Bird', thumb: 'img-u1', players: 12400, rating: 4.8, url: '/game-flappy' },
+        { id: 'casino', title: '🎰 УДАЧА', thumb: 'img-u2', players: 8900, rating: 4.6, url: '/game-casino' }
       ];
 
       grid.innerHTML = games.map(g => `
@@ -319,17 +429,15 @@
     }
 
     function loadView(viewName) {
-      const container = document.getElementById('view-container');
-      if (viewName === 'home') {
-        renderHome();
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        document.querySelector('.nav-link[data-view="home"]').classList.add('active');
-        return;
-      }
-      container.innerHTML = `<div class="view active"><div class="view-title">${viewName}</div><p>Раздел в разработке</p></div>`;
       document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
       const activeLink = document.querySelector(`.nav-link[data-view="${viewName}"]`);
       if (activeLink) activeLink.classList.add('active');
+
+      if (viewName === 'home') renderHome();
+      else if (viewName === 'discovery') renderDiscovery();
+      else {
+        document.getElementById('view-container').innerHTML = `<div class="view active"><div class="view-title">${viewName}</div><p>Раздел в разработке</p></div>`;
+      }
     }
 
     window.addEventListener('load', () => {
