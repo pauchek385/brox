@@ -21,27 +21,30 @@
     }
     .sidebar {
       width: 260px; background: rgba(6,3,10,0.99); border-right: 1px solid rgba(255,255,255,0.07);
-      padding: 30px 20px; display: flex; flex-direction: column; gap: 20px;
+      padding: 30px 20px; display: flex; flex-direction: column; gap: 15px;
     }
-    .logo { font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 900; color: #c77dff; text-align: center; }
+    .logo { 
+      font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 900; 
+      color: #c77dff; text-align: center; margin-bottom: 10px; 
+    }
     .btn {
       width: 100%; padding: 14px; border: none; border-radius: 12px; font-weight: 700;
-      cursor: pointer; font-size: 14px; transition: 0.3s;
+      cursor: pointer; font-size: 14px; transition: 0.3s; font-family: 'Inter', sans-serif;
     }
     .btn-primary { background: var(--accent); color: #fff; }
     .btn-primary:hover { background: #c77dff; }
     .btn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #aaa; }
     .btn-outline:hover { border-color: var(--accent); color: #fff; }
-    .btn-publish { background: #00ff88; color: #000; margin-top: auto; }
+    .btn-publish { background: #00ff88; color: #000; }
     .btn-publish:hover { background: #00cc66; }
-    .btn-back { background: transparent; color: #ff0055; border: 1px solid #ff0055; }
+    .btn-back { background: transparent; color: #ff0055; border: 1px solid #ff0055; margin-top: auto; }
     .btn-back:hover { background: rgba(255,0,85,0.1); }
 
     .main {
-      flex: 1; display: flex; flex-direction: column; padding: 20px;
+      flex: 1; display: flex; flex-direction: column; padding: 20px; overflow: hidden;
     }
     .editor-header {
-      display: flex; align-items: center; gap: 20px; margin-bottom: 20px;
+      display: flex; align-items: center; gap: 20px; margin-bottom: 20px; flex-shrink: 0;
     }
     .game-title-input {
       flex: 1; padding: 14px; background: rgba(255,255,255,0.03);
@@ -51,7 +54,7 @@
     .game-title-input:focus { border-color: var(--accent); }
 
     .editor-workspace {
-      flex: 1; display: flex; gap: 20px;
+      flex: 1; display: flex; gap: 20px; min-height: 0;
     }
     .game-preview {
       flex: 2; background: #0a0a14; border: 1px solid rgba(255,255,255,0.07);
@@ -61,41 +64,47 @@
     .game-preview iframe {
       width: 100%; height: 100%; border: none;
     }
-    .game-preview .empty-state {
+    .empty-state {
       color: var(--dim); font-size: 48px; text-align: center;
+    }
+    .empty-state span {
+      display: block; font-size: 14px; margin-top: 10px;
     }
     .tools-panel {
       flex: 1; background: rgba(6,3,10,0.8); border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 16px; padding: 20px; overflow-y: auto;
+      border-radius: 16px; padding: 20px; overflow-y: auto; display: flex; flex-direction: column;
     }
     .tools-title {
       font-size: 14px; font-weight: 800; text-transform: uppercase;
       letter-spacing: 3px; color: var(--dim); margin-bottom: 20px;
     }
     .tool-group { margin-bottom: 24px; }
-    .tool-label { font-size: 12px; color: #888; margin-bottom: 8px; font-weight: 600; }
+    .tool-label { font-size: 12px; color: #888; margin-bottom: 8px; font-weight: 600; display: block; }
     .code-editor {
-      width: 100%; height: 200px; background: #0a0a14; border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 12px; color: #00ff88; font-family: 'JetBrains Mono', monospace;
-      font-size: 13px; padding: 14px; resize: vertical; outline: none;
+      width: 100%; background: #0a0a14; border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px; color: #00ff88; font-family: 'Courier New', monospace;
+      font-size: 13px; padding: 14px; outline: none; resize: vertical;
     }
     .code-editor:focus { border-color: var(--accent); }
 
-    /* Модалка публикации */
+    /* Модальное окно */
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
       display: none; align-items: center; justify-content: center; z-index: 1000;
     }
+    .modal-overlay.show { display: flex; }
     .modal {
       background: #13131c; border: 1px solid rgba(255,255,255,0.07);
       border-radius: 24px; padding: 30px; width: 90%; max-width: 500px;
     }
+    .modal h3 { margin-bottom: 20px; font-size: 20px; }
     .modal input, .modal select, .modal textarea {
       width: 100%; padding: 12px; margin: 8px 0; background: #1a1a2e;
-      border: 1px solid #333; border-radius: 10px; color: #fff;
+      border: 1px solid #333; border-radius: 10px; color: #fff; font-family: 'Inter', sans-serif;
     }
+    .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
     .success-msg {
-      color: #00ff88; text-align: center; display: none; padding: 20px;
+      color: #00ff88; text-align: center; padding: 20px; display: none;
     }
   </style>
 </head>
@@ -119,28 +128,28 @@
 
   <div class="editor-workspace">
     <div class="game-preview" id="gamePreview">
-      <div class="empty-state">🎮<br><span style="font-size:14px;">Код игры появится здесь</span></div>
+      <div class="empty-state">🎮<span>Код игры появится здесь</span></div>
     </div>
 
     <div class="tools-panel">
       <div class="tools-title">🛠️ Редактор кода</div>
       
       <div class="tool-group">
-        <div class="tool-label">HTML</div>
-        <textarea class="code-editor" id="htmlCode" placeholder="<div id='game'>...</div>"></textarea>
+        <label class="tool-label">HTML</label>
+        <textarea class="code-editor" id="htmlCode" rows="6" placeholder="<div id='game'>...</div>"></textarea>
       </div>
       
       <div class="tool-group">
-        <div class="tool-label">CSS</div>
-        <textarea class="code-editor" id="cssCode" placeholder="#game { ... }"></textarea>
+        <label class="tool-label">CSS</label>
+        <textarea class="code-editor" id="cssCode" rows="6" placeholder="#game { ... }"></textarea>
       </div>
       
       <div class="tool-group">
-        <div class="tool-label">JavaScript</div>
-        <textarea class="code-editor" id="jsCode" placeholder="// Логика игры..."></textarea>
+        <label class="tool-label">JavaScript</label>
+        <textarea class="code-editor" id="jsCode" rows="8" placeholder="// Логика игры..."></textarea>
       </div>
       
-      <button class="btn btn-primary" onclick="updatePreview()" style="margin-top:10px;">▶️ Запустить предпросмотр</button>
+      <button class="btn btn-primary" onclick="updatePreview()">▶️ Запустить предпросмотр</button>
     </div>
   </div>
 </div>
@@ -148,7 +157,7 @@
 <!-- Модалка публикации -->
 <div class="modal-overlay" id="publishModal">
   <div class="modal">
-    <h3 style="margin-bottom:15px;">🚀 Опубликовать игру</h3>
+    <h3>🚀 Опубликовать игру</h3>
     <div id="publishForm">
       <input type="text" id="pubTitle" placeholder="Название игры">
       <textarea id="pubDesc" placeholder="Описание игры" rows="3"></textarea>
@@ -159,13 +168,13 @@
         <option value="social">Social</option>
         <option value="survival">Survival</option>
       </select>
-      <div style="display:flex; gap:10px; margin-top:15px;">
-        <button class="btn btn-outline" onclick="closePublishModal()" style="flex:1;">Отмена</button>
-        <button class="btn btn-publish" onclick="publishGame()" style="flex:1;">Опубликовать</button>
+      <div class="modal-buttons">
+        <button class="btn btn-outline" onclick="closePublishModal()">Отмена</button>
+        <button class="btn btn-publish" onclick="publishGame()">Опубликовать</button>
       </div>
     </div>
     <div class="success-msg" id="successMsg">
-      ✅ Игра опубликована!<br>
+      ✅ Игра опубликована!<br><br>
       <a href="home.html" style="color:#c77dff;">Вернуться в BROX</a>
     </div>
   </div>
@@ -186,8 +195,8 @@
   // ========== ШАБЛОНЫ ИГР ==========
   const templates = {
     platformer: {
-      html: `<canvas id="gameCanvas" width="400" height="300"></canvas>`,
-      css: `#gameCanvas { background: #87CEEB; display: block; margin: 0 auto; }`,
+      html: '<canvas id="gameCanvas" width="400" height="300"></canvas>',
+      css: '#gameCanvas { background: #87CEEB; display: block; margin: 0 auto; border: 2px solid #333; }',
       js: `const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -198,11 +207,9 @@ let platforms = [
 ];
 
 function gameLoop() {
-  // Физика
   player.vy += 0.5;
   player.y += player.vy;
   
-  // Проверка платформ
   player.onGround = false;
   platforms.forEach(p => {
     if (player.x < p.x + p.w && player.x + player.w > p.x &&
@@ -213,7 +220,6 @@ function gameLoop() {
     }
   });
   
-  // Отрисовка
   ctx.clearRect(0, 0, 400, 300);
   ctx.fillStyle = '#ff6600';
   ctx.fillRect(player.x, player.y, player.w, player.h);
@@ -235,10 +241,10 @@ gameLoop();`
     clicker: {
       html: `<div style="text-align:center; padding:50px;">
   <h2>Кликай быстрее!</h2>
-  <button id="clickBtn" style="font-size:48px; padding:20px; border-radius:50%; cursor:pointer;">🖱️</button>
+  <button id="clickBtn" style="font-size:48px; padding:20px; border-radius:50%; cursor:pointer; border:none; background:#9d4edd; transition:0.1s;">🖱️</button>
   <h3>Счёт: <span id="score">0</span></h3>
 </div>`,
-      css: `button:active { transform: scale(0.9); }`,
+      css: `#clickBtn:active { transform: scale(0.9); }`,
       js: `let score = 0;
 document.getElementById('clickBtn').addEventListener('click', () => {
   score++;
@@ -249,6 +255,7 @@ document.getElementById('clickBtn').addEventListener('click', () => {
 
   function loadTemplate(type) {
     const t = templates[type];
+    if (!t) return;
     document.getElementById('htmlCode').value = t.html;
     document.getElementById('cssCode').value = t.css;
     document.getElementById('jsCode').value = t.js;
@@ -260,32 +267,35 @@ document.getElementById('clickBtn').addEventListener('click', () => {
     document.getElementById('cssCode').value = '';
     document.getElementById('jsCode').value = '';
     document.getElementById('gameTitle').value = 'Моя игра';
-    updatePreview();
+    document.getElementById('gamePreview').innerHTML = '<div class="empty-state">🎮<span>Код игры появится здесь</span></div>';
   }
 
   function updatePreview() {
-    const html = document.getElementById('htmlCode').value;
-    const css = document.getElementById('cssCode').value;
-    const js = document.getElementById('jsCode').value;
+    const html = document.getElementById('htmlCode').value || '';
+    const css = document.getElementById('cssCode').value || '';
+    const js = document.getElementById('jsCode').value || '';
 
-    const fullCode = `<!DOCTYPE html><html><head><style>${css}</style></head><body>${html}<script>${js}</script></body></html>`;
+    const fullCode = `<!DOCTYPE html><html><head><style>body{margin:0;overflow:hidden;}${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
     
     const preview = document.getElementById('gamePreview');
-    preview.innerHTML = `<iframe id="previewFrame"></iframe>`;
+    preview.innerHTML = '<iframe id="previewFrame" sandbox="allow-scripts allow-same-origin" style="width:100%;height:100%;border:none;"></iframe>';
     
     const frame = document.getElementById('previewFrame');
-    frame.srcdoc = fullCode;
+    if (frame) {
+      frame.srcdoc = fullCode;
+    }
   }
 
   function openPublishModal() {
-    document.getElementById('publishModal').style.display = 'flex';
+    document.getElementById('publishModal').classList.add('show');
     document.getElementById('pubTitle').value = document.getElementById('gameTitle').value;
+    document.getElementById('pubDesc').value = '';
+    document.getElementById('successMsg').style.display = 'none';
+    document.getElementById('publishForm').style.display = 'block';
   }
 
   function closePublishModal() {
-    document.getElementById('publishModal').style.display = 'none';
-    document.getElementById('successMsg').style.display = 'none';
-    document.getElementById('publishForm').style.display = 'block';
+    document.getElementById('publishModal').classList.remove('show');
   }
 
   async function publishGame() {
@@ -293,17 +303,25 @@ document.getElementById('clickBtn').addEventListener('click', () => {
     const desc = document.getElementById('pubDesc').value.trim();
     const cat = document.getElementById('pubCat').value;
 
-    if (!title) return alert('Введи название игры!');
+    if (!title) {
+      alert('Введи название игры!');
+      return;
+    }
 
-    // Сохраняем код игры в localStorage (потом можно в Firebase Storage)
+    // Сохраняем код игры в localStorage
     const gameCode = {
       html: document.getElementById('htmlCode').value,
       css: document.getElementById('cssCode').value,
       js: document.getElementById('jsCode').value
     };
-    localStorage.setItem('game_' + title, JSON.stringify(gameCode));
+    
+    try {
+      localStorage.setItem('game_' + title, JSON.stringify(gameCode));
+    } catch(e) {
+      console.log('localStorage переполнен, но игра всё равно опубликуется');
+    }
 
-    // Добавляем игру в базу
+    // Добавляем игру в Firebase
     const gameRef = db.ref('games').push();
     await gameRef.set({
       title: title,
@@ -315,35 +333,47 @@ document.getElementById('clickBtn').addEventListener('click', () => {
       active: true,
       players: 0,
       rating: 0,
-      createdAt: Date.now(),
-      // В будущем: код игры будет в Firebase Storage
-      gameCodeKey: 'game_' + title
+      createdAt: Date.now()
     });
 
     document.getElementById('publishForm').style.display = 'none';
     document.getElementById('successMsg').style.display = 'block';
+    
+    // Закрываем модалку через 2 секунды
+    setTimeout(() => {
+      closePublishModal();
+    }, 2000);
   }
 
-  // Автозагрузка последней игры
-  window.addEventListener('load', () => {
-    const lastGame = localStorage.getItem('lastGameCode');
-    if (lastGame) {
-      const code = JSON.parse(lastGame);
-      document.getElementById('htmlCode').value = code.html || '';
-      document.getElementById('cssCode').value = code.css || '';
-      document.getElementById('jsCode').value = code.js || '';
-      updatePreview();
-    }
+  // Закрытие модалки по клику вне
+  document.getElementById('publishModal').addEventListener('click', function(e) {
+    if (e.target === this) closePublishModal();
   });
 
-  // Сохранение при уходе
+  // Автозагрузка последнего кода
+  window.addEventListener('load', () => {
+    try {
+      const lastCode = localStorage.getItem('lastGameCode');
+      if (lastCode) {
+        const code = JSON.parse(lastCode);
+        document.getElementById('htmlCode').value = code.html || '';
+        document.getElementById('cssCode').value = code.css || '';
+        document.getElementById('jsCode').value = code.js || '';
+        updatePreview();
+      }
+    } catch(e) {}
+  });
+
+  // Сохранение кода при уходе
   window.addEventListener('beforeunload', () => {
     const code = {
       html: document.getElementById('htmlCode').value,
       css: document.getElementById('cssCode').value,
       js: document.getElementById('jsCode').value
     };
-    localStorage.setItem('lastGameCode', JSON.stringify(code));
+    try {
+      localStorage.setItem('lastGameCode', JSON.stringify(code));
+    } catch(e) {}
   });
 </script>
 
