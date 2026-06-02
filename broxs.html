@@ -31,8 +31,6 @@
       width: 100%; padding: 14px; border: none; border-radius: 12px; font-weight: 700;
       cursor: pointer; font-size: 14px; transition: 0.3s; font-family: 'Inter', sans-serif;
     }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:hover { background: #c77dff; }
     .btn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #aaa; }
     .btn-outline:hover { border-color: var(--accent); color: #fff; }
     .btn-publish { background: #00ff88; color: #000; }
@@ -114,8 +112,6 @@
   <div class="logo">🧪 Brox Studio</div>
   
   <button class="btn btn-outline" onclick="newGame()">📄 Новый проект</button>
-  <button class="btn btn-outline" onclick="loadTemplate('platformer')">🕹️ Шаблон: Платформер</button>
-  <button class="btn btn-outline" onclick="loadTemplate('clicker')">👆 Шаблон: Кликер</button>
   
   <button class="btn btn-publish" onclick="openPublishModal()">🚀 Опубликовать игру</button>
   <button class="btn btn-back" onclick="window.location.href='home.html'">← Назад в BROX</button>
@@ -149,7 +145,7 @@
         <textarea class="code-editor" id="jsCode" rows="8" placeholder="// Логика игры..."></textarea>
       </div>
       
-      <button class="btn btn-primary" onclick="updatePreview()">▶️ Запустить предпросмотр</button>
+      <button class="btn btn-publish" onclick="updatePreview()" style="background: var(--accent); color: #fff;">▶️ Запустить предпросмотр</button>
     </div>
   </div>
 </div>
@@ -191,76 +187,6 @@
     appId: "1:660066059407:web:0d87f09259e53563555cfa"
   });
   const db = firebase.database();
-
-  // ========== ШАБЛОНЫ ИГР ==========
-  const templates = {
-    platformer: {
-      html: '<canvas id="gameCanvas" width="400" height="300"></canvas>',
-      css: '#gameCanvas { background: #87CEEB; display: block; margin: 0 auto; border: 2px solid #333; }',
-      js: `const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-
-let player = { x: 50, y: 200, w: 30, h: 30, vy: 0, onGround: false };
-let platforms = [
-  { x: 0, y: 280, w: 400, h: 20 },
-  { x: 150, y: 200, w: 100, h: 10 }
-];
-
-function gameLoop() {
-  player.vy += 0.5;
-  player.y += player.vy;
-  
-  player.onGround = false;
-  platforms.forEach(p => {
-    if (player.x < p.x + p.w && player.x + player.w > p.x &&
-        player.y + player.h > p.y && player.y < p.y + p.h && player.vy > 0) {
-      player.y = p.y - player.h;
-      player.vy = 0;
-      player.onGround = true;
-    }
-  });
-  
-  ctx.clearRect(0, 0, 400, 300);
-  ctx.fillStyle = '#ff6600';
-  ctx.fillRect(player.x, player.y, player.w, player.h);
-  
-  ctx.fillStyle = '#654321';
-  platforms.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
-  
-  requestAnimationFrame(gameLoop);
-}
-
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'ArrowRight') player.x += 20;
-  if (e.key === 'ArrowLeft') player.x -= 20;
-  if (e.key === ' ' && player.onGround) player.vy = -10;
-});
-
-gameLoop();`
-    },
-    clicker: {
-      html: `<div style="text-align:center; padding:50px;">
-  <h2>Кликай быстрее!</h2>
-  <button id="clickBtn" style="font-size:48px; padding:20px; border-radius:50%; cursor:pointer; border:none; background:#9d4edd; transition:0.1s;">🖱️</button>
-  <h3>Счёт: <span id="score">0</span></h3>
-</div>`,
-      css: `#clickBtn:active { transform: scale(0.9); }`,
-      js: `let score = 0;
-document.getElementById('clickBtn').addEventListener('click', () => {
-  score++;
-  document.getElementById('score').textContent = score;
-});`
-    }
-  };
-
-  function loadTemplate(type) {
-    const t = templates[type];
-    if (!t) return;
-    document.getElementById('htmlCode').value = t.html;
-    document.getElementById('cssCode').value = t.css;
-    document.getElementById('jsCode').value = t.js;
-    updatePreview();
-  }
 
   function newGame() {
     document.getElementById('htmlCode').value = '';
@@ -339,7 +265,6 @@ document.getElementById('clickBtn').addEventListener('click', () => {
     document.getElementById('publishForm').style.display = 'none';
     document.getElementById('successMsg').style.display = 'block';
     
-    // Закрываем модалку через 2 секунды
     setTimeout(() => {
       closePublishModal();
     }, 2000);
@@ -348,20 +273,6 @@ document.getElementById('clickBtn').addEventListener('click', () => {
   // Закрытие модалки по клику вне
   document.getElementById('publishModal').addEventListener('click', function(e) {
     if (e.target === this) closePublishModal();
-  });
-
-  // Автозагрузка последнего кода
-  window.addEventListener('load', () => {
-    try {
-      const lastCode = localStorage.getItem('lastGameCode');
-      if (lastCode) {
-        const code = JSON.parse(lastCode);
-        document.getElementById('htmlCode').value = code.html || '';
-        document.getElementById('cssCode').value = code.css || '';
-        document.getElementById('jsCode').value = code.js || '';
-        updatePreview();
-      }
-    } catch(e) {}
   });
 
   // Сохранение кода при уходе
