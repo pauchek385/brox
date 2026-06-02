@@ -9,7 +9,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <style>
     :root {
@@ -249,13 +248,19 @@
 
     <form id="auth-form" autocomplete="off">
 
-      <!-- НИК (регистрация) -->
-      <div class="input-group" id="username-group" style="display:none;">
+      <!-- НИК (и для входа, и для регистрации) -->
+      <div class="input-group">
         <div class="input-label">Никнейм</div>
-        <input type="text" class="input-field" id="username" placeholder="Придумай ник">
+        <input type="text" class="input-field" id="username" placeholder="Твой ник" required>
       </div>
 
-      <!-- ДАТА РОЖДЕНИЯ (регистрация) -->
+      <!-- ПАРОЛЬ -->
+      <div class="input-group">
+        <div class="input-label">Пароль</div>
+        <input type="password" class="input-field" id="password" placeholder="Минимум 6 символов" minlength="6" required>
+      </div>
+
+      <!-- ДАТА РОЖДЕНИЯ (только регистрация) -->
       <div id="birthday-group" style="display:none;">
         <div class="input-group">
           <div class="input-label">Дата рождения</div>
@@ -273,19 +278,7 @@
         </div>
       </div>
 
-      <!-- EMAIL -->
-      <div class="input-group">
-        <div class="input-label">Email</div>
-        <input type="email" class="input-field" id="email" placeholder="brox@example.com" required>
-      </div>
-
-      <!-- ПАРОЛЬ -->
-      <div class="input-group">
-        <div class="input-label">Пароль</div>
-        <input type="password" class="input-field" id="password" placeholder="Минимум 6 символов" minlength="6" required>
-      </div>
-
-      <!-- ГЕНДЕР (регистрация) -->
+      <!-- ГЕНДЕР (только регистрация) -->
       <div id="gender-group" style="display:none;">
         <div class="input-label">Пол</div>
         <div class="gender-row">
@@ -320,8 +313,7 @@
     messagingSenderId: "660066059407",
     appId: "1:660066059407:web:0d87f09259e53563555cfa"
   });
-  const auth = firebase.auth();
-  const db   = firebase.database();
+  const db = firebase.database();
 
   // ========== ДНИ И ГОДЫ ==========
   const daySelect = document.getElementById('day');
@@ -343,7 +335,6 @@
   const subtitle    = document.getElementById('subtitle');
   const toggleText  = document.getElementById('toggle-text');
   const toggleLink  = document.getElementById('toggle-link');
-  const usernameGrp = document.getElementById('username-group');
   const birthdayGrp = document.getElementById('birthday-group');
   const genderGrp   = document.getElementById('gender-group');
   const errorMsg    = document.getElementById('error-message');
@@ -352,7 +343,6 @@
   function toggleMode() {
     isLogin = !isLogin;
     if (isLogin) {
-      usernameGrp.style.display = 'none';
       birthdayGrp.style.display = 'none';
       genderGrp.style.display = 'none';
       submitBtn.textContent = 'ВОЙТИ';
@@ -360,7 +350,6 @@
       toggleText.textContent = 'Нет аккаунта?';
       toggleLink.textContent = 'Создать';
     } else {
-      usernameGrp.style.display = 'block';
       birthdayGrp.style.display = 'block';
       genderGrp.style.display = 'block';
       submitBtn.textContent = 'ЗАРЕГИСТРИРОВАТЬСЯ';
@@ -387,58 +376,43 @@
     if (gender === 'female') document.getElementById('gender-female').classList.add('selected');
   }
 
-  // ========== СОХРАНЕНИЕ В БАЗУ ==========
-  async function saveUserToDB(user, extra = {}) {
-    const userData = {
-      email: user.email,
-      nick: extra.username || 'Игрок',
-      brobux: 0,
-      createdAt: firebase.database.ServerValue.TIMESTAMP
-    };
-    if (extra.birthday) userData.birthday = extra.birthday;
-    if (extra.gender) userData.gender = extra.gender;
-    await db.ref('users/' + extra.username).set(userData);
-    localStorage.setItem('spark_user', extra.username);
-  }
-
   // ========== ОТПРАВКА ФОРМЫ ==========
   document.getElementById('auth-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     hideMessages();
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
     
-    if (password.length < 6) { 
-      showError('Пароль должен быть не менее 6 символов'); 
-      return; 
-    }
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    if (!username) { showError('Введи никнейм'); return; }
+    if (password.length < 6) { showError('Пароль должен быть не менее 6 символов'); return; }
 
     try {
       if (isLogin) {
         // ВХОД
-        await auth.signInWithEmailAndPassword(email, password);
-        // Ищем ник пользователя по email
-        const usersSnap = await db.ref('users').once('value');
-        const users = usersSnap.val();
-        let userNick = null;
-        for (const [nick, data] of Object.entries(users)) {
-          if (data.email === email) {
-            userNick = nick;
-            break;
-          }
+        const userSnap = await db.ref('users/' + username).once('value');
+        if (!userSnap.exists()) {
+          showError('Пользователь не найден');
+          return;
         }
-        if (userNick) {
-          localStorage.setItem('spark_user', userNick);
-          showSuccess('Вход выполнен!');
-          setTimeout(() => { window.location.href = 'home.html'; }, 1200);
-        } else {
-          showError('Пользователь не найден в базе');
+        const userData = userSnap.val();
+        if (userData.password !== password) {
+          showError('Неверный пароль');
+          return;
         }
+        localStorage.setItem('spark_user', username);
+        showSuccess('Вход выполнен!');
+        setTimeout(() => { window.location.href = 'home.html'; }, 1200);
       } else {
         // РЕГИСТРАЦИЯ
-        const username = document.getElementById('username').value.trim();
-        if (!username) { showError('Придумай никнейм'); return; }
-        
+        const day = document.getElementById('day').value;
+        const month = document.getElementById('month').value;
+        const year = document.getElementById('year').value;
+        const gender = document.getElementById('gender').value;
+
+        if (!day || !month || !year) { showError('Выбери дату рождения'); return; }
+        if (!gender) { showError('Выбери пол'); return; }
+
         // Проверка, не занят ли ник
         const userSnap = await db.ref('users/' + username).once('value');
         if (userSnap.exists()) {
@@ -446,33 +420,23 @@
           return;
         }
 
-        const day = document.getElementById('day').value;
-        const month = document.getElementById('month').value;
-        const year = document.getElementById('year').value;
-        const gender = document.getElementById('gender').value;
-        if (!day || !month || !year) { showError('Выбери дату рождения'); return; }
-        if (!gender) { showError('Выбери пол'); return; }
-
-        const userCred = await auth.createUserWithEmailAndPassword(email, password);
-        await saveUserToDB(userCred.user, { 
-          username, 
-          birthday: { day, month, year }, 
-          gender 
+        // Сохраняем пользователя
+        await db.ref('users/' + username).set({
+          nick: username,
+          password: password,
+          birthday: { day, month, year },
+          gender: gender,
+          brobux: 0,
+          createdAt: firebase.database.ServerValue.TIMESTAMP
         });
+
+        localStorage.setItem('spark_user', username);
         showSuccess('Аккаунт создан!');
         setTimeout(() => { window.location.href = 'home.html'; }, 1200);
       }
     } catch (err) {
       console.error(err);
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        showError('Неверный email или пароль');
-      } else if (err.code === 'auth/email-already-in-use') {
-        showError('Этот email уже используется');
-      } else if (err.code === 'auth/invalid-email') {
-        showError('Некорректный email');
-      } else {
-        showError('Ошибка: ' + err.message);
-      }
+      showError('Ошибка: ' + err.message);
     }
   });
 </script>
