@@ -27,6 +27,18 @@
       font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 900; 
       color: #c77dff; text-align: center; margin-bottom: 10px; 
     }
+    .save-indicator {
+      font-size: 11px; color: #00ff88; text-align: center; display: flex;
+      align-items: center; justify-content: center; gap: 6px;
+    }
+    .save-dot {
+      width: 8px; height: 8px; background: #00ff88; border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
     .btn {
       width: 100%; padding: 14px; border: none; border-radius: 12px; font-weight: 700;
       cursor: pointer; font-size: 14px; transition: 0.3s; font-family: 'Inter', sans-serif;
@@ -104,6 +116,18 @@
     .success-msg {
       color: #00ff88; text-align: center; padding: 20px; display: none;
     }
+    .project-list {
+      display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;
+      margin-bottom: 10px;
+    }
+    .project-item {
+      padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;
+      cursor: pointer; font-size: 13px; transition: 0.2s;
+    }
+    .project-item:hover { background: rgba(255,255,255,0.06); }
+    .project-item .delete-btn {
+      float: right; color: #ff0055; cursor: pointer; font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -111,7 +135,15 @@
 <div class="sidebar">
   <div class="logo">🧪 Brox Studio</div>
   
+  <div class="save-indicator" id="saveIndicator">
+    <div class="save-dot"></div>
+    Автосохранение
+  </div>
+  
   <button class="btn btn-outline" onclick="newGame()">📄 Новый проект</button>
+  
+  <div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:2px; margin-top:10px;">Мои проекты</div>
+  <div class="project-list" id="projectList"></div>
   
   <button class="btn btn-publish" onclick="openPublishModal()">🚀 Опубликовать игру</button>
   <button class="btn btn-back" onclick="window.location.href='home.html'">← Назад в BROX</button>
@@ -188,11 +220,112 @@
   });
   const db = firebase.database();
 
+  let currentProjectName = null;
+  let saveInterval = null;
+
+  // ========== АВТОСОХРАНЕНИЕ ==========
+  function saveProject(name) {
+    const code = {
+      title: document.getElementById('gameTitle').value,
+      html: document.getElementById('htmlCode').value,
+      css: document.getElementById('cssCode').value,
+      js: document.getElementById('jsCode').value,
+      lastSaved: new Date().toISOString()
+    };
+    localStorage.setItem('brox_project_' + name, JSON.stringify(code));
+    currentProjectName = name;
+    updateProjectList();
+    
+    // Показываем индикатор сохранения
+    const indicator = document.getElementById('saveIndicator');
+    indicator.innerHTML = '<div class="save-dot" style="background:#00ff88;"></div> Сохранено';
+    setTimeout(() => {
+      indicator.innerHTML = '<div class="save-dot"></div> Автосохранение';
+    }, 1000);
+  }
+
+  function loadProject(name) {
+    const saved = localStorage.getItem('brox_project_' + name);
+    if (!saved) return;
+    
+    const code = JSON.parse(saved);
+    document.getElementById('gameTitle').value = code.title || 'Моя игра';
+    document.getElementById('htmlCode').value = code.html || '';
+    document.getElementById('cssCode').value = code.css || '';
+    document.getElementById('jsCode').value = code.js || '';
+    currentProjectName = name;
+    updatePreview();
+  }
+
+  function deleteProject(name) {
+    localStorage.removeItem('brox_project_' + name);
+    if (currentProjectName === name) {
+      newGame();
+    }
+    updateProjectList();
+  }
+
+  function updateProjectList() {
+    const list = document.getElementById('projectList');
+    const projects = [];
+    
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key.startsWith('brox_project_')) {
+        const name = key.replace('brox_project_', '');
+        try {
+          const data = JSON.parse(localStorage.getItem(key));
+          projects.push({ name, title: data.title, lastSaved: data.lastSaved });
+        } catch(e) {}
+      }
+    }
+    
+    list.innerHTML = projects.map(p => `
+      <div class="project-item" onclick="loadProject('${p.name}')">
+        <span>${p.title || p.name}</span>
+        <span class="delete-btn" onclick="event.stopPropagation(); deleteProject('${p.name}')">✕</span>
+        <div style="font-size:10px; color:#555;">${new Date(p.lastSaved).toLocaleDateString()}</div>
+      </div>
+    `).join('');
+  }
+
+  // Автосохранение каждые 5 секунд
+  function startAutoSave() {
+    if (saveInterval) clearInterval(saveInterval);
+    saveInterval = setInterval(() => {
+      const title = document.getElementById('gameTitle').value.trim();
+      const name = title || 'untitled';
+      saveProject(name);
+    }, 5000);
+  }
+
+  // Сохраняем при изменениях в полях
+  document.getElementById('gameTitle').addEventListener('input', () => {
+    const title = document.getElementById('gameTitle').value.trim();
+    if (title) saveProject(title);
+  });
+  
+  document.getElementById('htmlCode').addEventListener('input', () => {
+    const title = document.getElementById('gameTitle').value.trim() || 'untitled';
+    saveProject(title);
+  });
+  
+  document.getElementById('cssCode').addEventListener('input', () => {
+    const title = document.getElementById('gameTitle').value.trim() || 'untitled';
+    saveProject(title);
+  });
+  
+  document.getElementById('jsCode').addEventListener('input', () => {
+    const title = document.getElementById('gameTitle').value.trim() || 'untitled';
+    saveProject(title);
+  });
+
   function newGame() {
     document.getElementById('htmlCode').value = '';
     document.getElementById('cssCode').value = '';
     document.getElementById('jsCode').value = '';
     document.getElementById('gameTitle').value = 'Моя игра';
+    currentProjectName = null;
     document.getElementById('gamePreview').innerHTML = '<div class="empty-state">🎮<span>Код игры появится здесь</span></div>';
   }
 
@@ -234,18 +367,14 @@
       return;
     }
 
-    // Сохраняем код игры в localStorage
+    // Сохраняем код игры
     const gameCode = {
       html: document.getElementById('htmlCode').value,
       css: document.getElementById('cssCode').value,
       js: document.getElementById('jsCode').value
     };
     
-    try {
-      localStorage.setItem('game_' + title, JSON.stringify(gameCode));
-    } catch(e) {
-      console.log('localStorage переполнен, но игра всё равно опубликуется');
-    }
+    localStorage.setItem('game_' + title, JSON.stringify(gameCode));
 
     // Добавляем игру в Firebase
     const gameRef = db.ref('games').push();
@@ -275,16 +404,23 @@
     if (e.target === this) closePublishModal();
   });
 
-  // Сохранение кода при уходе
+  // ========== ЗАГРУЗКА ПОСЛЕДНЕГО ПРОЕКТА ==========
+  window.addEventListener('load', () => {
+    updateProjectList();
+    startAutoSave();
+    
+    // Загружаем последний сохранённый проект
+    const lastProject = localStorage.getItem('brox_last_project');
+    if (lastProject) {
+      loadProject(lastProject);
+    }
+  });
+
+  // Сохраняем имя последнего проекта
   window.addEventListener('beforeunload', () => {
-    const code = {
-      html: document.getElementById('htmlCode').value,
-      css: document.getElementById('cssCode').value,
-      js: document.getElementById('jsCode').value
-    };
-    try {
-      localStorage.setItem('lastGameCode', JSON.stringify(code));
-    } catch(e) {}
+    if (currentProjectName) {
+      localStorage.setItem('brox_last_project', currentProjectName);
+    }
   });
 </script>
 
