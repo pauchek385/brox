@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BROX | Создать игру</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧊</text></svg>">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <style>
+    body { background:#030106; color:#fff; font-family:Inter,sans-serif; padding:40px; }
+    input, select, textarea { width:100%; padding:12px; margin:8px 0; background:#1a1a2e; border:1px solid #333; border-radius:10px; color:#fff; }
+    button { background:#9d4edd; color:#fff; border:none; padding:14px; border-radius:10px; cursor:pointer; width:100%; font-weight:700; }
+    .success { color:#00ff88; margin-top:10px; display:none; }
+    .error { color:#ff0055; margin-top:10px; display:none; }
+  </style>
+</head>
+<body>
+  <h1>🎮 Создать игру</h1>
+  
+  <input type="text" id="title" placeholder="Название игры">
+  <textarea id="desc" placeholder="Описание игры"></textarea>
+  <select id="cat">
+    <option value="action">Action</option>
+    <option value="rpg">RPG</option>
+    <option value="racing">Racing</option>
+    <option value="social">Social</option>
+    <option value="survival">Survival</option>
+  </select>
+  <input type="text" id="url" placeholder="Ссылка на игру (например /game-flappy)">
+  
+  <button onclick="submitGame()">Создать игру</button>
+  
+  <div class="success" id="success">Игра отправлена на проверку!</div>
+  <div class="error" id="error">Ошибка! Заполни все поля.</div>
+
+  <script>
+    firebase.initializeApp({
+      apiKey: "AIzaSyAr8MamzQhhvUjZ1VIWvytRheHWjNtiRIM",
+      authDomain: "spark-9e768.firebaseapp.com",
+      databaseURL: "https://spark-9e768-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "spark-9e768",
+      storageBucket: "spark-9e768.firebasestorage.app",
+      messagingSenderId: "660066059407",
+      appId: "1:660066059407:web:0d87f09259e53563555cfa"
+    });
+    const db = firebase.database();
+    const user = localStorage.getItem('spark_user');
+
+    function submitGame() {
+      const title = document.getElementById('title').value.trim();
+      const desc = document.getElementById('desc').value.trim();
+      const cat = document.getElementById('cat').value;
+      const url = document.getElementById('url').value.trim();
+
+      if (!title || !desc || !url) {
+        document.getElementById('error').style.display = 'block';
+        return;
+      }
+
+      const gameRef = db.ref('games').push();
+      gameRef.set({
+        title, desc, cat, url,
+        creator: user || 'anonymous',
+        verified: (user === 'brox_admin'), // Твои игры сразу verified
+        active: true,
+        players: 0,
+        rating: 0,
+        createdAt: Date.now()
+      });
+
+      document.getElementById('success').style.display = 'block';
+      document.getElementById('error').style.display = 'none';
+      
+      // Очищаем форму
+      document.getElementById('title').value = '';
+      document.getElementById('desc').value = '';
+      document.getElementById('url').value = '';
+    }
+  </script>
+</body>
+</html>
