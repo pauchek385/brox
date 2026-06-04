@@ -12,7 +12,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <style>
-    /* ========== ТВОЙ CSS (без изменений) ========== */
     :root {
       --bg-ultra: #030106;
       --bg-sidebar: rgba(6, 3, 10, 0.99);
@@ -106,13 +105,16 @@
     .game-tile:hover .play-icon { transform:translate(-50%,-50%) scale(1); }
     .game-title { font-size:30px; font-weight:900; margin-bottom:8px; }
     .game-meta { display:flex; gap:20px; font-size:14px; color:var(--text-dim); }
-    .tag { display:inline-block; padding:5px 14px; border-radius:99px; font-size:12px; font-weight:700; letter-spacing:1px; }
-    .tag-hot { background:rgba(255,0,85,0.15); color:var(--danger); border:1px solid rgba(255,0,85,0.3); }
-    .tag-new { background:rgba(0,255,136,0.1); color:var(--success); border:1px solid rgba(0,255,136,0.2); }
-    .tag-live { background:rgba(157,78,221,0.15); color:var(--accent-glow); border:1px solid rgba(157,78,221,0.3); animation:blink 2s infinite; }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    .toast-container { position:fixed; top:40px; right:40px; display:flex; flex-direction:column; gap:15px; z-index:10000; }
+    .toast { background:var(--bg-sidebar); border:1px solid var(--glass-bright); padding:22px 35px; border-radius:22px; color:#fff; display:flex; align-items:center; gap:20px; box-shadow:0 30px 60px rgba(0,0,0,0.8); animation:toast_slide 0.6s cubic-bezier(0.175,0.885,0.32,1.275); transition:0.5s; }
+    @keyframes toast_slide { from { transform:translateX(120%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+    .toast.dismiss { transform:translateX(150%); opacity:0; }
+    .toast-icon { width:12px; height:12px; border-radius:50%; background:var(--accent-glow); }
+    .footer { margin-top:auto; padding:80px 0 40px; border-top:1px solid var(--glass-border); display:flex; justify-content:space-between; color:var(--text-mute); font-size:13px; font-weight:700; }
+    .img-u1 { background-image:url('https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?q=80&w=1200'); }
+    .img-u2 { background-image:url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1200'); }
 
-    /* ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ DISCOVERY */
+    /* Стили для Discovery */
     .category-tabs { display:flex; gap:12px; margin-bottom:40px; flex-wrap:wrap; }
     .tab-btn {
       padding:12px 24px; border-radius:99px; border:1px solid var(--glass-border);
@@ -121,18 +123,9 @@
     }
     .tab-btn:hover { color:#fff; border-color:var(--glass-bright); }
     .tab-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 0 30px rgba(157,78,221,0.4); }
-    .discovery-grid {
-      display:flex; gap:30px; overflow-x:auto; overflow-y:visible;
-      padding:10px 0 30px;
-    }
-    .discovery-grid::-webkit-scrollbar { height:4px; background:transparent; }
-    .discovery-grid::-webkit-scrollbar-thumb { background:var(--glass-border); border-radius:10px; }
-    .discovery-card {
-      min-width:300px; background:var(--bg-card); border:1px solid var(--glass-border);
-      border-radius:var(--radius-md); overflow:hidden; cursor:pointer;
-      transition:var(--transition-main); flex-shrink:0; z-index:1;
-    }
-    .discovery-card:hover { transform:translateY(-10px); border-color:var(--accent); z-index:10; }
+    .discovery-grid { display:flex; gap:30px; overflow-x:auto; overflow-y:visible; padding:10px 0 30px; }
+    .discovery-card { min-width:300px; background:var(--bg-card); border:1px solid var(--glass-border); border-radius:var(--radius-md); overflow:hidden; cursor:pointer; transition:var(--transition-main); flex-shrink:0; }
+    .discovery-card:hover { transform:translateY(-10px); border-color:var(--accent); }
     .disc-thumb { height:160px; background-size:cover; background-position:center; position:relative; }
     .disc-thumb::after { content:''; position:absolute; inset:0; background:linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.8)); }
     .disc-body { padding:25px; }
@@ -142,33 +135,20 @@
     .disc-footer { display:flex; justify-content:space-between; align-items:center; }
     .disc-players { font-size:13px; color:var(--text-mute); font-family:'JetBrains Mono'; }
     .disc-rating { font-size:13px; color:var(--coin); font-weight:700; }
-    .mini-discovery-grid {
-      display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));
-      gap:20px; width:100%;
-    }
-    .mini-card {
-      background:var(--bg-card); border:1px solid var(--glass-border);
-      border-radius:18px; overflow:hidden; cursor:pointer;
-      transition:var(--transition-main); text-align:center;
-    }
+    .mini-discovery-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:20px; width:100%; }
+    .mini-card { background:var(--bg-card); border:1px solid var(--glass-border); border-radius:18px; overflow:hidden; cursor:pointer; transition:var(--transition-main); text-align:center; }
     .mini-card:hover { transform:translateY(-8px); border-color:var(--accent); }
     .mini-thumb { height:90px; background-size:cover; background-position:center; }
     .mini-body { padding:12px; }
     .mini-title { font-size:14px; font-weight:700; margin-bottom:4px; }
     .mini-meta { font-size:11px; color:var(--text-dim); }
 
-    .toast-container { position:fixed; top:40px; right:40px; display:flex; flex-direction:column; gap:15px; z-index:10000; }
-    .toast { background:var(--bg-sidebar); border:1px solid var(--glass-bright); padding:22px 35px; border-radius:22px; color:#fff; display:flex; align-items:center; gap:20px; box-shadow:0 30px 60px rgba(0,0,0,0.8); animation:toast_slide 0.6s cubic-bezier(0.175,0.885,0.32,1.275); transition:0.5s; }
-    @keyframes toast_slide { from { transform:translateX(120%); opacity:0; } to { transform:translateX(0); opacity:1; } }
-    .toast.dismiss { transform:translateX(150%); opacity:0; }
-    .toast-icon { width:12px; height:12px; border-radius:50%; background:var(--accent-glow); }
-    .footer { margin-top:auto; padding:80px 0 40px; border-top:1px solid var(--glass-border); display:flex; justify-content:space-between; color:var(--text-mute); font-size:13px; font-weight:700; }
-    .img-u1 { background-image:url('https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?q=80&w=1200'); }
-    .img-u2 { background-image:url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1200'); }
-    .img-u3 { background-image:url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200'); }
-    .img-u4 { background-image:url('https://images.unsplash.com/photo-1605810230434-7631ac76ec81?q=80&w=1200'); }
-    .img-u5 { background-image:url('https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1200'); }
-    .img-u6 { background-image:url('https://images.unsplash.com/photo-1552820728-8b83bb6b773f?q=80&w=1200'); }
+    /* Стили для Avatar Shop */
+    .market-card {
+      background:var(--bg-card); border:1px solid var(--glass-border);
+      border-radius:20px; overflow:hidden; cursor:pointer; transition:var(--transition-main);
+    }
+    .market-card:hover { border-color:var(--accent); transform:translateY(-5px); }
   </style>
 </head>
 <body>
@@ -217,11 +197,10 @@
     });
     const db = firebase.database();
 
-    // ========== Аутентификация ==========
     const currentUser = localStorage.getItem('spark_user');
     if (!currentUser) window.location.href = '/';
 
-    // ========== Реальный баланс из brobux (как в игре УДАЧА) ==========
+    // ========== Баланс ==========
     const balanceRef = db.ref(`users/${currentUser}/brobux`);
     balanceRef.on('value', snap => {
       const brobux = snap.exists() ? snap.val() : 0;
@@ -313,9 +292,7 @@
     function loadDiscovery(category = 'all') {
       db.ref('games').orderByChild('verified').equalTo(true).once('value', snap => {
         const allGames = snap.exists() ? Object.values(snap.val()) : [];
-        const filtered = category === 'all' 
-          ? allGames.filter(g => g.active !== false) 
-          : allGames.filter(g => g.cat === category && g.active !== false);
+        const filtered = category === 'all' ? allGames.filter(g => g.active !== false) : allGames.filter(g => g.cat === category && g.active !== false);
 
         const recGrid = document.getElementById('discGrid');
         if (recGrid) {
@@ -351,6 +328,81 @@
       });
     }
 
+    // ========== Рендер Avatar Shop ==========
+    function renderMarket() {
+      const container = document.getElementById('view-container');
+      container.innerHTML = `
+        <div class="view active" id="view-market">
+          <div class="view-title">Avatar Shop</div>
+          <div style="display:flex; gap:12px; margin-bottom:30px; flex-wrap:wrap;" id="marketTabs">
+            <button class="tab-btn active" data-filter="all">All</button>
+            <button class="tab-btn" data-filter="weapon">Weapons</button>
+            <button class="tab-btn" data-filter="armor">Armor</button>
+            <button class="tab-btn" data-filter="cosmetic">Cosmetics</button>
+            <button class="tab-btn" data-filter="vehicle">Vehicles</button>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:25px;" id="marketGrid"></div>
+        </div>
+      `;
+
+      const MARKET_ITEMS = [
+        { name: 'Void Katana', icon: '🗡️', rarity: 'legendary', cat: 'weapon', price: 1200 },
+        { name: 'Cyber Mask v3', icon: '🎭', rarity: 'epic', cat: 'cosmetic', price: 450 },
+        { name: 'Gravity Boots', icon: '👟', rarity: 'rare', cat: 'armor', price: 350 },
+        { name: 'Neon Trench', icon: '🧥', rarity: 'epic', cat: 'armor', price: 800 },
+        { name: 'Phantom Rifle', icon: '🔫', rarity: 'legendary', cat: 'weapon', price: 2200 },
+        { name: 'Holo Wings', icon: '🦋', rarity: 'legendary', cat: 'cosmetic', price: 3500 },
+        { name: 'Speed Bike', icon: '🏍️', rarity: 'epic', cat: 'vehicle', price: 1800 },
+        { name: 'Basic Sword', icon: '⚔️', rarity: 'common', cat: 'weapon', price: 120 },
+        { name: 'Stealth Cloak', icon: '🌫️', rarity: 'rare', cat: 'cosmetic', price: 600 },
+        { name: 'Mech Armor', icon: '🦾', rarity: 'epic', cat: 'armor', price: 950 },
+        { name: 'Laser Pistol', icon: '🔆', rarity: 'rare', cat: 'weapon', price: 380 },
+        { name: 'Drift Car Pro', icon: '🚗', rarity: 'legendary', cat: 'vehicle', price: 4000 }
+      ];
+
+      function showItems(filter) {
+        const grid = document.getElementById('marketGrid');
+        const filtered = filter === 'all' ? MARKET_ITEMS : MARKET_ITEMS.filter(i => i.cat === filter);
+        grid.innerHTML = filtered.map(item => {
+          const rarityColor = item.rarity === 'legendary' ? '#ffcc00' : item.rarity === 'epic' ? '#c77dff' : item.rarity === 'rare' ? '#00bfff' : '#888';
+          return `
+            <div class="market-card">
+              <div style="height:160px; display:flex; align-items:center; justify-content:center; font-size:64px; background:rgba(255,255,255,0.02);">${item.icon}</div>
+              <div style="padding:20px;">
+                <div style="font-size:16px; font-weight:800; margin-bottom:5px;">${item.name}</div>
+                <div style="font-size:11px; text-transform:uppercase; letter-spacing:2px; margin-bottom:12px; color:${rarityColor};">${item.rarity}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span style="font-weight:700; color:#ffcc00; font-family:'JetBrains Mono';">${item.price.toLocaleString()} BROBUX</span>
+                  <button onclick="buyMarketItem('${item.name}', ${item.price})" style="background:#9d4edd; color:#fff; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:700;">Купить</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      showItems('all');
+
+      document.getElementById('marketTabs').addEventListener('click', e => {
+        const btn = e.target.closest('.tab-btn');
+        if (!btn) return;
+        document.querySelectorAll('#marketTabs .tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        showItems(btn.dataset.filter);
+      });
+
+      window.buyMarketItem = function(name, price) {
+        db.ref(`users/${currentUser}/brobux`).transaction(balance => {
+          if ((balance || 0) < price) {
+            pushToast('Недостаточно BROBUX! 💸', 'var(--danger)');
+            return;
+          }
+          pushToast(`Куплено: ${name}! 🎉`, 'var(--success)');
+          return (balance || 0) - price;
+        });
+      };
+    }
+
     // ========== Друзья из Firebase ==========
     function listenToFriends() {
       const row = document.getElementById('realtime-friends');
@@ -359,39 +411,18 @@
       db.ref(`users/${currentUser}/friends`).on('value', async snap => {
         const friendsObj = snap.exists() ? snap.val() : {};
         const friendNicks = Object.keys(friendsObj);
-
         document.getElementById('friends-count').textContent = `Друзья (${friendNicks.length})`;
-
-        row.innerHTML = `
-          <div class="friend-card add-friend" onclick="window.location.href='/friends'">
-            <div class="avatar-wrap">➕</div><span class="friend-name">Add Friend</span>
-          </div>
-        `;
-
-        if (friendNicks.length === 0) {
-          const empty = document.createElement('div');
-          empty.style.cssText = 'color:var(--text-dim); font-size:14px; padding:20px;';
-          empty.textContent = 'Пока нет друзей';
-          row.appendChild(empty);
-          return;
-        }
-
+        row.innerHTML = `<div class="friend-card add-friend" onclick="window.location.href='/friends'"><div class="avatar-wrap">➕</div><span class="friend-name">Add Friend</span></div>`;
+        if (friendNicks.length === 0) { row.innerHTML += '<div style="color:var(--text-dim); padding:20px;">Пока нет друзей</div>'; return; }
         for (const friendNick of friendNicks) {
           const userSnap = await db.ref(`users/${friendNick}`).once('value');
           const userData = userSnap.exists() ? userSnap.val() : {};
           const emoji = userData.emoji || '😎';
           const online = userData.online === true;
           const status = online ? 'online' : (userData.status === 'afk' ? 'away' : 'offline');
-
           const card = document.createElement('div');
           card.className = 'friend-card';
-          card.innerHTML = `
-            <div class="avatar-wrap">
-              ${emoji}
-              <div class="status-light ${status}"></div>
-            </div>
-            <span class="friend-name">${friendNick}</span>
-          `;
+          card.innerHTML = `<div class="avatar-wrap">${emoji}<div class="status-light ${status}"></div></div><span class="friend-name">${friendNick}</span>`;
           row.appendChild(card);
         }
       });
@@ -401,29 +432,19 @@
     function renderRealGames() {
       const grid = document.getElementById('homeGames');
       if (!grid) return;
-
       const games = [
         { id: 'flappy', title: '🐦 Flappy Bird', thumb: 'img-u1', players: 12400, rating: 4.8, url: '/game-flappy' },
         { id: 'casino', title: '🎰 УДАЧА', thumb: 'img-u2', players: 8900, rating: 4.6, url: '/game-casino' }
       ];
-
       grid.innerHTML = games.map(g => `
         <div class="game-tile" data-url="${g.url}">
           <div class="game-art ${g.thumb}"></div>
           <div class="play-icon">▶</div>
-          <div class="game-content">
-            <div class="game-title">${g.title}</div>
-            <div class="game-meta"><span>🟢 ${g.players.toLocaleString()}</span><span>⭐ ${g.rating}</span></div>
-          </div>
+          <div class="game-content"><div class="game-title">${g.title}</div><div class="game-meta"><span>🟢 ${g.players.toLocaleString()}</span><span>⭐ ${g.rating}</span></div></div>
         </div>
       `).join('');
-
       document.querySelectorAll('.game-tile').forEach(tile => {
-        tile.addEventListener('click', function(e) {
-          const url = this.dataset.url;
-          if (url) window.location.href = url;
-          else pushToast('Игра скоро появится', 'var(--accent-glow)');
-        });
+        tile.addEventListener('click', function() { const url = this.dataset.url; if (url) window.location.href = url; });
       });
     }
 
@@ -431,17 +452,13 @@
       document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
       const activeLink = document.querySelector(`.nav-link[data-view="${viewName}"]`);
       if (activeLink) activeLink.classList.add('active');
-
       if (viewName === 'home') renderHome();
       else if (viewName === 'discovery') renderDiscovery();
-      else {
-        document.getElementById('view-container').innerHTML = `<div class="view active"><div class="view-title">${viewName}</div><p>Раздел в разработке</p></div>`;
-      }
+      else if (viewName === 'market') renderMarket();
+      else document.getElementById('view-container').innerHTML = `<div class="view active"><div class="view-title">${viewName}</div><p>Раздел в разработке</p></div>`;
     }
 
-    window.addEventListener('load', () => {
-      renderHome();
-    });
+    window.addEventListener('load', () => { renderHome(); });
   </script>
 </body>
 </html>
