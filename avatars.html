@@ -1,0 +1,157 @@
+<div class="view active" id="view-shop">
+  <div class="view-title">Avatar</div>
+  <div class="shop-layout">
+    <div class="shop-categories">
+      <div>
+        <div class="shop-section-title">🎭 Маски</div>
+        <div class="shop-items-row" id="shopFaces"></div>
+      </div>
+      <div>
+        <div class="shop-section-title">👕 Одежда</div>
+        <div class="shop-items-row" id="shopOutfits"></div>
+      </div>
+      <div>
+        <div class="shop-section-title">🗡️ Оружие</div>
+        <div class="shop-items-row" id="shopWeapons"></div>
+      </div>
+      <div>
+        <div class="shop-section-title">✨ Эффекты</div>
+        <div class="shop-items-row" id="shopEffects"></div>
+      </div>
+    </div>
+
+    <div class="avatar-preview">
+      <span class="avatar-big" id="avatarEmoji">🤖</span>
+      <div class="avatar-name">Cyber_Punk</div>
+      <div class="avatar-level">LVL 42 · PRIME MEMBER</div>
+      <div class="equipped-list">
+        <div style="font-size:13px;color:var(--text-mute);text-transform:uppercase;letter-spacing:3px;margin-bottom:15px;font-weight:800;">Экипировано</div>
+        <div class="equipped-item"><span class="equipped-icon" id="eq-face">🤖</span> <span id="eq-face-name">Default Mask</span></div>
+        <div class="equipped-item"><span class="equipped-icon" id="eq-outfit">👔</span> <span id="eq-outfit-name">Default Outfit</span></div>
+        <div class="equipped-item"><span class="equipped-icon" id="eq-weapon">✊</span> <span id="eq-weapon-name">Fists</span></div>
+        <div class="equipped-item"><span class="equipped-icon" id="eq-effect">—</span> <span id="eq-effect-name">No Effect</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const db = firebase.database();
+    let ownedItems = new Set();
+
+    // Стартовый набор (можно заменить на загрузку из users/uid/inventory)
+    ownedItems.add('Default Mask');
+    ownedItems.add('Default Outfit');
+    ownedItems.add('Fists');
+
+    // Категории предметов
+    const categories = {
+      faces:   { container: 'shopFaces',   slot: 'face',   eqIcon: 'eq-face',   eqName: 'eq-face-name'   },
+      outfits: { container: 'shopOutfits', slot: 'outfit', eqIcon: 'eq-outfit', eqName: 'eq-outfit-name' },
+      weapons: { container: 'shopWeapons', slot: 'weapon', eqIcon: 'eq-weapon', eqName: 'eq-weapon-name' },
+      effects: { container: 'shopEffects', slot: 'effect', eqIcon: 'eq-effect', eqName: 'eq-effect-name' }
+    };
+
+    function loadShopData() {
+      db.ref('shop').on('value', snap => {
+        const data = snap.exists() ? snap.val() : {};
+        // Если база пуста, создаём дефолтный магазин
+        if (!data.faces) {
+          const defaultShop = {
+            faces: [
+              { icon: '🤖', name: 'Default Mask', price: 0 },
+              { icon: '👺', name: 'Demon Mask', price: 450 },
+              { icon: '🎭', name: 'Phantom', price: 800 },
+              { icon: '💀', name: 'Skull', price: 300 },
+              { icon: '🦊', name: 'Fox Spirit', price: 600 },
+              { icon: '👽', name: 'Alien', price: 1000 }
+            ],
+            outfits: [
+              { icon: '👔', name: 'Default Outfit', price: 0 },
+              { icon: '🧥', name: 'Neon Trench', price: 800 },
+              { icon: '⚙️', name: 'Mech Suit', price: 1500 },
+              { icon: '🥷', name: 'Ninja Set', price: 700 },
+              { icon: '👑', name: 'Royal Set', price: 2000 }
+            ],
+            weapons: [
+              { icon: '✊', name: 'Fists', price: 0 },
+              { icon: '🗡️', name: 'Void Katana', price: 1200 },
+              { icon: '🔫', name: 'Phantom Rifle', price: 2200 },
+              { icon: '⚡', name: 'Thunder Staff', price: 900 }
+            ],
+            effects: [
+              { icon: '—', name: 'None', price: 0 },
+              { icon: '🔥', name: 'Fire Aura', price: 500 },
+              { icon: '❄️', name: 'Ice Trail', price: 500 },
+              { icon: '⚡', name: 'Lightning', price: 750 },
+              { icon: '🌟', name: 'Star Burst', price: 1000 }
+            ]
+          };
+          db.ref('shop').set(defaultShop);
+          renderShop(defaultShop);
+        } else {
+          renderShop(data);
+        }
+      });
+    }
+
+    function renderShop(data) {
+      for (let [cat, items] of Object.entries(data)) {
+        const cfg = categories[cat];
+        if (!cfg) continue;
+        const container = document.getElementById(cfg.container);
+        if (!container) continue;
+
+        container.innerHTML = items.map(item => {
+          const owned = ownedItems.has(item.name) || item.price === 0;
+          return `
+            <div class="shop-item ${owned ? 'equipped' : ''}" 
+                 draggable="true" 
+                 data-icon="${item.icon}" 
+                 data-name="${item.name}" 
+                 data-slot="${cfg.slot}"
+                 data-price="${item.price || 0}"
+                 onclick="equipItem('${item.icon}','${item.name}','${cfg.slot}','${cfg.eqIcon}','${cfg.eqName}')">
+              <span class="shop-item-icon">${item.icon}</span>
+              <div class="shop-item-name">${item.name}</div>
+              ${owned ? '<div class="shop-item-owned">✓</div>' : ''}
+            </div>
+          `;
+        }).join('');
+
+        // Drag-and-drop
+        container.querySelectorAll('.shop-item').forEach(el => {
+          el.addEventListener('dragstart', e => {
+            e.dataTransfer.setData('text/plain', `${el.dataset.icon}|${el.dataset.name}|${el.dataset.slot}`);
+            el.style.opacity = '0.5';
+          });
+          el.addEventListener('dragend', e => { el.style.opacity = '1'; });
+        });
+      }
+    }
+
+    // Экипировка
+    window.equipItem = function(icon, name, slot, eqIconId, eqNameId) {
+      document.getElementById(eqIconId).textContent = icon;
+      document.getElementById(eqNameId).textContent = name;
+      if (slot === 'face') document.getElementById('avatarEmoji').textContent = icon;
+      BROX.pushToast(`Экипировано: ${name}!`);
+    };
+
+    // Drag-and-drop на аватар
+    const avatar = document.getElementById('avatarEmoji');
+    avatar.addEventListener('dragover', e => e.preventDefault());
+    avatar.addEventListener('drop', e => {
+      e.preventDefault();
+      const [icon, name, slot] = e.dataTransfer.getData('text/plain').split('|');
+      if (slot === 'face') avatar.textContent = icon;
+      document.getElementById(`eq-${slot}`).textContent = icon;
+      document.getElementById(`eq-${slot}-name`).textContent = name;
+      BROX.pushToast(`Экипировано: ${name}!`, 'var(--success)');
+    });
+
+    // Загрузка при открытии
+    loadShopData();
+  })();
+</script>

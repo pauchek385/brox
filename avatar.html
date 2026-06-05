@@ -1,157 +1,352 @@
-<div class="view active" id="view-shop">
-  <div class="view-title">Avatar</div>
-  <div class="shop-layout">
-    <div class="shop-categories">
-      <div>
-        <div class="shop-section-title">🎭 Маски</div>
-        <div class="shop-items-row" id="shopFaces"></div>
-      </div>
-      <div>
-        <div class="shop-section-title">👕 Одежда</div>
-        <div class="shop-items-row" id="shopOutfits"></div>
-      </div>
-      <div>
-        <div class="shop-section-title">🗡️ Оружие</div>
-        <div class="shop-items-row" id="shopWeapons"></div>
-      </div>
-      <div>
-        <div class="shop-section-title">✨ Эффекты</div>
-        <div class="shop-items-row" id="shopEffects"></div>
-      </div>
-    </div>
-
-    <div class="avatar-preview">
-      <span class="avatar-big" id="avatarEmoji">🤖</span>
-      <div class="avatar-name">Cyber_Punk</div>
-      <div class="avatar-level">LVL 42 · PRIME MEMBER</div>
-      <div class="equipped-list">
-        <div style="font-size:13px;color:var(--text-mute);text-transform:uppercase;letter-spacing:3px;margin-bottom:15px;font-weight:800;">Экипировано</div>
-        <div class="equipped-item"><span class="equipped-icon" id="eq-face">🤖</span> <span id="eq-face-name">Default Mask</span></div>
-        <div class="equipped-item"><span class="equipped-icon" id="eq-outfit">👔</span> <span id="eq-outfit-name">Default Outfit</span></div>
-        <div class="equipped-item"><span class="equipped-icon" id="eq-weapon">✊</span> <span id="eq-weapon-name">Fists</span></div>
-        <div class="equipped-item"><span class="equipped-icon" id="eq-effect">—</span> <span id="eq-effect-name">No Effect</span></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-  (function() {
-    const db = firebase.database();
-    let ownedItems = new Set();
-
-    // Стартовый набор (можно заменить на загрузку из users/uid/inventory)
-    ownedItems.add('Default Mask');
-    ownedItems.add('Default Outfit');
-    ownedItems.add('Fists');
-
-    // Категории предметов
-    const categories = {
-      faces:   { container: 'shopFaces',   slot: 'face',   eqIcon: 'eq-face',   eqName: 'eq-face-name'   },
-      outfits: { container: 'shopOutfits', slot: 'outfit', eqIcon: 'eq-outfit', eqName: 'eq-outfit-name' },
-      weapons: { container: 'shopWeapons', slot: 'weapon', eqIcon: 'eq-weapon', eqName: 'eq-weapon-name' },
-      effects: { container: 'shopEffects', slot: 'effect', eqIcon: 'eq-effect', eqName: 'eq-effect-name' }
-    };
-
-    function loadShopData() {
-      db.ref('shop').on('value', snap => {
-        const data = snap.exists() ? snap.val() : {};
-        // Если база пуста, создаём дефолтный магазин
-        if (!data.faces) {
-          const defaultShop = {
-            faces: [
-              { icon: '🤖', name: 'Default Mask', price: 0 },
-              { icon: '👺', name: 'Demon Mask', price: 450 },
-              { icon: '🎭', name: 'Phantom', price: 800 },
-              { icon: '💀', name: 'Skull', price: 300 },
-              { icon: '🦊', name: 'Fox Spirit', price: 600 },
-              { icon: '👽', name: 'Alien', price: 1000 }
-            ],
-            outfits: [
-              { icon: '👔', name: 'Default Outfit', price: 0 },
-              { icon: '🧥', name: 'Neon Trench', price: 800 },
-              { icon: '⚙️', name: 'Mech Suit', price: 1500 },
-              { icon: '🥷', name: 'Ninja Set', price: 700 },
-              { icon: '👑', name: 'Royal Set', price: 2000 }
-            ],
-            weapons: [
-              { icon: '✊', name: 'Fists', price: 0 },
-              { icon: '🗡️', name: 'Void Katana', price: 1200 },
-              { icon: '🔫', name: 'Phantom Rifle', price: 2200 },
-              { icon: '⚡', name: 'Thunder Staff', price: 900 }
-            ],
-            effects: [
-              { icon: '—', name: 'None', price: 0 },
-              { icon: '🔥', name: 'Fire Aura', price: 500 },
-              { icon: '❄️', name: 'Ice Trail', price: 500 },
-              { icon: '⚡', name: 'Lightning', price: 750 },
-              { icon: '🌟', name: 'Star Burst', price: 1000 }
-            ]
-          };
-          db.ref('shop').set(defaultShop);
-          renderShop(defaultShop);
-        } else {
-          renderShop(data);
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BROX | R6 Avatar</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧊</text></svg>">
+    <style>
+        :root {
+            --bg: #030106;
+            --accent: #9d4edd;
+            --accent-glow: #c77dff;
+            --coin: #ffcc00;
+            --text: #ffffff;
+            --dim: #7d7d7d;
+            --glass: rgba(18, 9, 32, 0.6);
+            --border: rgba(255, 255, 255, 0.07);
         }
-      });
-    }
 
-    function renderShop(data) {
-      for (let [cat, items] of Object.entries(data)) {
-        const cfg = categories[cat];
-        if (!cfg) continue;
-        const container = document.getElementById(cfg.container);
-        if (!container) continue;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            height: 100vh;
+            background: radial-gradient(circle at 50% 40%, rgba(157,78,221,0.15) 0%, var(--bg) 70%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+        }
 
-        container.innerHTML = items.map(item => {
-          const owned = ownedItems.has(item.name) || item.price === 0;
-          return `
-            <div class="shop-item ${owned ? 'equipped' : ''}" 
-                 draggable="true" 
-                 data-icon="${item.icon}" 
-                 data-name="${item.name}" 
-                 data-slot="${cfg.slot}"
-                 data-price="${item.price || 0}"
-                 onclick="equipItem('${item.icon}','${item.name}','${cfg.slot}','${cfg.eqIcon}','${cfg.eqName}')">
-              <span class="shop-item-icon">${item.icon}</span>
-              <div class="shop-item-name">${item.name}</div>
-              ${owned ? '<div class="shop-item-owned">✓</div>' : ''}
+        /* Кнопка Назад */
+        .back-btn {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            color: var(--dim);
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            z-index: 100;
+        }
+        .back-btn:hover {
+            color: #fff;
+            border-color: var(--accent-glow);
+            background: rgba(157,78,221,0.1);
+            transform: translateX(-4px);
+        }
+
+        /* Viewport */
+        .viewport {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1200px;
+            cursor: grab;
+        }
+        .viewport:active { cursor: grabbing; }
+
+        /* Сцена */
+        .scene {
+            width: 200px;
+            height: 400px;
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(-15deg) rotateY(-30deg);
+            transition: transform 0.05s linear;
+        }
+
+        /* Кубы */
+        .cube {
+            position: absolute;
+            transform-style: preserve-3d;
+            transform-origin: top center;
+        }
+        .face {
+            position: absolute;
+            box-sizing: border-box;
+            border: 1px solid rgba(0,0,0,0.25);
+        }
+
+        /* BROX-цвета */
+        :root {
+            --skin: #f5cba7;
+            --torso: #9d4edd;
+            --legs: #2c3e50;
+        }
+
+        /* Голова */
+        .head { width: 50px; height: 50px; top: 50px; left: 75px; transform-origin: bottom center; }
+        .head .face { width: 50px; height: 50px; background: var(--skin); }
+        .head .front { transform: translateZ(25px); display: flex; gap: 12px; justify-content: center; align-items: center; }
+        .head .back { transform: rotateY(180deg) translateZ(25px); }
+        .head .left { transform: rotateY(-90deg) translateZ(25px); }
+        .head .right { transform: rotateY(90deg) translateZ(25px); }
+        .head .top { transform: rotateX(90deg) translateZ(25px); }
+        .head .bottom { transform: rotateX(-90deg) translateZ(25px); }
+        .eye { width: 8px; height: 12px; background: #111; border-radius: 1px; animation: blink 4s infinite; }
+        @keyframes blink { 0%,90%,100%{transform:scaleY(1)} 95%{transform:scaleY(0)} }
+
+        /* Торс */
+        .torso { width: 76px; height: 120px; top: 102px; left: 62px; }
+        .torso .face { background: var(--torso); }
+        .torso .front,.torso .back { width:76px; height:120px; }
+        .torso .left,.torso .right { width:40px; height:120px; background:#7b2dd4; }
+        .torso .top,.torso .bottom { width:76px; height:40px; }
+        .torso .front { transform:translateZ(20px); }
+        .torso .back { transform:rotateY(180deg) translateZ(20px); }
+        .torso .left { transform:rotateY(-90deg) translateZ(20px); }
+        .torso .right { transform:rotateY(90deg) translateZ(56px); }
+        .torso .top { transform:rotateX(90deg) translateZ(20px); }
+        .torso .bottom { transform:rotateX(-90deg) translateZ(100px); }
+
+        /* Руки */
+        .arm { width:26px; height:110px; top:102px; }
+        .arm .face { background: var(--skin); }
+        .arm .front,.arm .back { width:26px; height:110px; }
+        .arm .left,.arm .right { width:30px; height:110px; background:#e0b090; }
+        .arm .top,.arm .bottom { width:26px; height:30px; }
+        .arm .front { transform:translateZ(15px); }
+        .arm .back { transform:rotateY(180deg) translateZ(15px); }
+        .arm .left { transform:rotateY(-90deg) translateZ(15px); }
+        .arm .right { transform:rotateY(90deg) translateZ(11px); }
+        .arm .top { transform:rotateX(90deg) translateZ(15px); }
+        .arm .bottom { transform:rotateX(-90deg) translateZ(95px); }
+        .left-arm { left:32px; }
+        .right-arm { left:142px; }
+
+        /* Ноги */
+        .leg { width:34px; height:120px; top:222px; }
+        .leg .face { background: var(--legs); }
+        .leg .front,.leg .back { width:34px; height:120px; }
+        .leg .left,.leg .right { width:34px; height:120px; background:#1a2a38; }
+        .leg .top,.leg .bottom { width:34px; height:34px; }
+        .leg .front { transform:translateZ(17px); }
+        .leg .back { transform:rotateY(180deg) translateZ(17px); }
+        .leg .left { transform:rotateY(-90deg) translateZ(17px); }
+        .leg .right { transform:rotateY(90deg) translateZ(17px); }
+        .leg .top { transform:rotateX(90deg) translateZ(17px); }
+        .leg .bottom { transform:rotateX(-90deg) translateZ(103px); }
+        .left-leg { left:63px; }
+        .right-leg { left:103px; }
+
+        .shadow {
+            position:absolute; width:150px; height:60px; background:rgba(0,0,0,0.4);
+            border-radius:50%; bottom:-30px; left:25px; transform:rotateX(90deg) translateZ(-50px); filter:blur(10px);
+        }
+
+        /* Меню анимаций */
+        .menu {
+            position: absolute;
+            left: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--glass);
+            backdrop-filter: blur(30px);
+            padding: 24px;
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 100;
+            width: 200px;
+        }
+        .menu h3 {
+            color: var(--accent-glow);
+            font-size: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .btn {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            color: var(--dim);
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            text-align: left;
+        }
+        .btn:hover {
+            border-color: var(--accent-glow);
+            color: #fff;
+            background: rgba(157,78,221,0.08);
+            transform: translateX(4px);
+        }
+        .btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(157,78,221,0.3);
+        }
+
+        /* Анимации */
+        .anim-idle .scene { animation: breathe 4s ease-in-out infinite alternate; }
+        @keyframes breathe {
+            0% { transform: rotateX(-15deg) rotateY(var(--ry)) translateY(0); }
+            100% { transform: rotateX(-18deg) rotateY(var(--ry)) translateY(-4px); }
+        }
+        .anim-idle .left-arm { transform: rotateX(5deg); }
+        .anim-idle .right-arm { transform: rotateX(-5deg); }
+
+        .anim-walk .left-leg { animation: r6-swing 1.4s ease-in-out infinite alternate; }
+        .anim-walk .right-leg { animation: r6-swing 1.4s ease-in-out infinite alternate-reverse; }
+        .anim-walk .left-arm { animation: r6-swing 1.4s ease-in-out infinite alternate-reverse; }
+        .anim-walk .right-arm { animation: r6-swing 1.4s ease-in-out infinite alternate; }
+        @keyframes r6-swing { 0%{transform:rotateX(-25deg)} 100%{transform:rotateX(25deg)} }
+
+        .anim-run .torso { animation: run-bob 0.6s ease-in-out infinite alternate; }
+        .anim-run .left-leg { animation: r6-run 0.6s ease-in-out infinite alternate; }
+        .anim-run .right-leg { animation: r6-run 0.6s ease-in-out infinite alternate-reverse; }
+        .anim-run .left-arm { animation: r6-run 0.6s ease-in-out infinite alternate-reverse; }
+        .anim-run .right-arm { animation: r6-run 0.6s ease-in-out infinite alternate; }
+        @keyframes r6-run { 0%{transform:rotateX(-40deg)} 100%{transform:rotateX(40deg)} }
+        @keyframes run-bob { 0%{transform:translateY(0) rotateX(5deg)} 100%{transform:translateY(-8px) rotateX(8deg)} }
+
+        .anim-jump .scene { animation: jump-up 1.2s cubic-bezier(0.25,0.46,0.45,0.94) infinite; }
+        .anim-jump .left-arm { transform: rotateX(160deg) rotateZ(-10deg); }
+        .anim-jump .right-arm { transform: rotateX(160deg) rotateZ(10deg); }
+        .anim-jump .left-leg { transform: rotateX(-10deg); }
+        .anim-jump .right-leg { transform: rotateX(10deg); }
+        @keyframes jump-up { 0%,100%{transform:rotateX(-15deg) rotateY(var(--ry)) translateY(0)} 50%{transform:rotateX(-15deg) rotateY(var(--ry)) translateY(-70px)} }
+
+        .anim-fall .scene { animation: float-fall 2s ease-in-out infinite alternate; }
+        .anim-fall .left-arm { transform: rotateX(120deg) rotateZ(-30deg); }
+        .anim-fall .right-arm { transform: rotateX(120deg) rotateZ(30deg); }
+        .anim-fall .left-leg { transform: rotateX(30deg) rotateZ(-10deg); }
+        .anim-fall .right-leg { transform: rotateX(-20deg) rotateZ(10deg); }
+        @keyframes float-fall { 0%{transform:rotateX(-10deg) rotateY(var(--ry)) translateY(-20px)} 100%{transform:rotateX(-20deg) rotateY(var(--ry)) translateY(-10px)} }
+
+        .anim-climb .torso { animation: climb-up 1.6s linear infinite; }
+        .anim-climb .left-arm { animation: r6-climb 0.8s ease-in-out infinite alternate; }
+        .anim-climb .right-arm { animation: r6-climb 0.8s ease-in-out infinite alternate-reverse; }
+        .anim-climb .left-leg { animation: r6-climb 0.8s ease-in-out infinite alternate-reverse; }
+        .anim-climb .right-leg { animation: r6-climb 0.8s ease-in-out infinite alternate; }
+        @keyframes r6-climb { 0%{transform:rotateX(45deg)} 100%{transform:rotateX(-20deg)} }
+        @keyframes climb-up { 0%{transform:translateY(15px)} 100%{transform:translateY(-15px)} }
+    </style>
+</head>
+<body class="anim-idle">
+
+    <button class="back-btn" onclick="window.location.href='home.html'">← Назад в BROX</button>
+
+    <div class="menu">
+        <h3>Анимации R6</h3>
+        <button class="btn active" onclick="setAnim('idle', this)">Покой</button>
+        <button class="btn" onclick="setAnim('walk', this)">Ходьба</button>
+        <button class="btn" onclick="setAnim('run', this)">Бег</button>
+        <button class="btn" onclick="setAnim('jump', this)">Прыжок</button>
+        <button class="btn" onclick="setAnim('fall', this)">Падение</button>
+        <button class="btn" onclick="setAnim('climb', this)">Лестница</button>
+    </div>
+
+    <div class="viewport" id="viewport">
+        <div class="scene" id="scene">
+            <div class="shadow"></div>
+
+            <div class="cube head">
+                <div class="face front"><div class="eye"></div><div class="eye"></div></div>
+                <div class="face back"></div><div class="face left"></div>
+                <div class="face right"></div><div class="face top"></div>
+                <div class="face bottom"></div>
             </div>
-          `;
-        }).join('');
 
-        // Drag-and-drop
-        container.querySelectorAll('.shop-item').forEach(el => {
-          el.addEventListener('dragstart', e => {
-            e.dataTransfer.setData('text/plain', `${el.dataset.icon}|${el.dataset.name}|${el.dataset.slot}`);
-            el.style.opacity = '0.5';
-          });
-          el.addEventListener('dragend', e => { el.style.opacity = '1'; });
+            <div class="cube torso">
+                <div class="face front"></div><div class="face back"></div>
+                <div class="face left"></div><div class="face right"></div>
+                <div class="face top"></div><div class="face bottom"></div>
+            </div>
+
+            <div class="cube arm left-arm">
+                <div class="face front"></div><div class="face back"></div>
+                <div class="face left"></div><div class="face right"></div>
+                <div class="face top"></div><div class="face bottom"></div>
+            </div>
+
+            <div class="cube arm right-arm">
+                <div class="face front"></div><div class="face back"></div>
+                <div class="face left"></div><div class="face right"></div>
+                <div class="face top"></div><div class="face bottom"></div>
+            </div>
+
+            <div class="cube leg left-leg">
+                <div class="face front"></div><div class="face back"></div>
+                <div class="face left"></div><div class="face right"></div>
+                <div class="face top"></div><div class="face bottom"></div>
+            </div>
+
+            <div class="cube leg right-leg">
+                <div class="face front"></div><div class="face back"></div>
+                <div class="face left"></div><div class="face right"></div>
+                <div class="face top"></div><div class="face bottom"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setAnim(animName, btn) {
+            document.body.className = '';
+            document.body.classList.add('anim-' + animName);
+            document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        const viewport = document.getElementById('viewport');
+        const scene = document.getElementById('scene');
+        
+        let targetRotationY = -30;
+        let targetRotationX = -15;
+        document.documentElement.style.setProperty('--ry', targetRotationY + 'deg');
+
+        let isDragging = false;
+        let previousMouseX = 0;
+        let previousMouseY = 0;
+
+        viewport.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            previousMouseX = e.clientX;
+            previousMouseY = e.clientY;
         });
-      }
-    }
 
-    // Экипировка
-    window.equipItem = function(icon, name, slot, eqIconId, eqNameId) {
-      document.getElementById(eqIconId).textContent = icon;
-      document.getElementById(eqNameId).textContent = name;
-      if (slot === 'face') document.getElementById('avatarEmoji').textContent = icon;
-      BROX.pushToast(`Экипировано: ${name}!`);
-    };
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const deltaX = e.clientX - previousMouseX;
+            const deltaY = e.clientY - previousMouseY;
+            targetRotationY += deltaX * 0.5;
+            targetRotationX = Math.max(-45, Math.min(45, targetRotationX - deltaY * 0.5));
+            document.documentElement.style.setProperty('--ry', targetRotationY + 'deg');
+            scene.style.transform = `rotateX(${targetRotationX}deg) rotateY(${targetRotationY}deg)`;
+            previousMouseX = e.clientX;
+            previousMouseY = e.clientY;
+        });
 
-    // Drag-and-drop на аватар
-    const avatar = document.getElementById('avatarEmoji');
-    avatar.addEventListener('dragover', e => e.preventDefault());
-    avatar.addEventListener('drop', e => {
-      e.preventDefault();
-      const [icon, name, slot] = e.dataTransfer.getData('text/plain').split('|');
-      if (slot === 'face') avatar.textContent = icon;
-      document.getElementById(`eq-${slot}`).textContent = icon;
-      document.getElementById(`eq-${slot}-name`).textContent = name;
-      BROX.pushToast(`Экипировано: ${name}!`, 'var(--success)');
-    });
-
-    // Загрузка при открытии
-    loadShopData();
-  })();
-</script>
+        window.addEventListener('mouseup', () => isDragging = false);
+    </script>
+</body>
+</html>
