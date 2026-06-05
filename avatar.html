@@ -29,30 +29,6 @@
             user-select: none;
         }
 
-        /* Кнопка Назад */
-        .back-btn {
-            position: absolute;
-            top: 30px;
-            left: 30px;
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
-            color: var(--dim);
-            padding: 12px 24px;
-            border-radius: 14px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.3s;
-            z-index: 100;
-        }
-        .back-btn:hover {
-            color: #fff;
-            border-color: var(--accent-glow);
-            background: rgba(157,78,221,0.1);
-            transform: translateX(-4px);
-        }
-
         /* Viewport */
         .viewport {
             width: 100vw;
@@ -253,8 +229,6 @@
     </style>
 </head>
 <body class="anim-idle">
-
-    <button class="back-btn" onclick="window.location.href='home.html'">← Назад в BROX</button>
 
     <div class="menu">
         <h3>Анимации R6</h3>
