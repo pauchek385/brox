@@ -145,7 +145,7 @@
   <div class="ambient-glow"></div>
   <div class="toast-container" id="toaster"></div>
 
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
     <div class="brand-box"><div class="brand-logo">BROX</div></div>
     <nav class="nav-group">
       <a class="nav-link active" data-view="home" onclick="loadView('home')"><i>🏠</i> Home</a>
@@ -158,6 +158,7 @@
       <a class="nav-link" data-view="settings" onclick="loadView('settings')"><i>⚙️</i> Settings</a>
       <a class="nav-link" href="broxs.html"><i>🧪</i> Brox Studio</a>
       <a class="nav-link" data-view="prime" onclick="loadView('prime')"><i>👑</i> Prime</a>
+      <a class="nav-link" data-view="admin" onclick="loadView('admin')" id="adminLink" style="display:none;"><i>🛡️</i> Admin</a>
     </nav>
   </aside>
 
@@ -174,7 +175,6 @@
   </main>
 
   <script>
-    // ========== FIREBASE ==========
     firebase.initializeApp({
       apiKey: "AIzaSyAr8MamzQhhvUjZ1VIWvytRheHWjNtiRIM",
       authDomain: "spark-9e768.firebaseapp.com",
@@ -195,6 +195,15 @@
     // ОНЛАЙН
     db.ref(`users/${currentUser}/online`).set(true);
     window.addEventListener('beforeunload', () => db.ref(`users/${currentUser}/online`).set(false));
+
+    // АДМИН-ССЫЛКА
+    db.ref(`users/${currentUser}/role`).on('value', snap => {
+      const role = snap.exists() ? snap.val() : 'user';
+      const adminLink = document.getElementById('adminLink');
+      if (role === 'owner' || role === 'admin' || role === 'junior') {
+        adminLink.style.display = 'flex';
+      }
+    });
 
     // ВЫХОД
     document.getElementById('logoutBtn').addEventListener('click', async () => {
@@ -347,6 +356,7 @@
       else if (v === 'market') renderMarket();
       else if (v === 'shop') renderAvatar();
       else if (v === 'inventory') renderInventory();
+      else if (v === 'admin') window.location.href = 'admin.html';
       else document.getElementById('view-container').innerHTML = `<div class="view active"><div class="view-title">${v}</div><p>Раздел в разработке</p></div>`;
     }
 

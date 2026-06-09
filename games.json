@@ -1,0 +1,30 @@
+{
+  "games": {
+    "flappy": {
+      "title": "🐦 Flappy Bird",
+      "cat": "action",
+      "desc": "Пролети как можно дальше и установи рекорд!",
+      "players": 0,
+      "rating": 4.8,
+      "thumb": "img-u1",
+      "url": "/game-flappy",
+      "creator": "brox_admin",
+      "verified": true,
+      "active": true,
+      "createdAt": 1717000000000
+    },
+    "casino": {
+      "title": "🎰 УДАЧА",
+      "cat": "social",
+      "desc": "Испытай удачу и сорви банк! Рискни своими BROBUX.",
+      "players": 0,
+      "rating": 4.6,
+      "thumb": "img-u2",
+      "url": "/game-casino",
+      "creator": "brox_admin",
+      "verified": true,
+      "active": true,
+      "createdAt": 1717000000000
+    }
+  }
+}
