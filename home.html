@@ -155,10 +155,10 @@
       <div class="nav-divider"></div>
       <a class="nav-link" data-view="inventory" onclick="loadView('inventory')"><i>🎒</i> Inventory</a>
       <a class="nav-link" data-view="messages" onclick="loadView('messages')"><i>✉️</i> Messages</a>
-      <a class="nav-link" data-view="settings" onclick="loadView('settings')"><i>⚙️</i> Settings</a>
+      <a class="nav-link" href="settings.html"><i>⚙️</i> Settings</a>
       <a class="nav-link" href="broxs.html"><i>🧪</i> Brox Studio</a>
-      <a class="nav-link" data-view="prime" onclick="loadView('prime')"><i>👑</i> Prime</a>
-      <a class="nav-link" data-view="admin" onclick="loadView('admin')" id="adminLink" style="display:none;"><i>🛡️</i> Admin</a>
+      <a class="nav-link" href="prime.html"><i>👑</i> Prime</a>
+      <a class="nav-link" href="admin.html" id="adminLink" style="display:none;"><i>🛡️</i> Admin</a>
     </nav>
   </aside>
 
@@ -199,9 +199,8 @@
     // АДМИН-ССЫЛКА
     db.ref(`users/${currentUser}/role`).on('value', snap => {
       const role = snap.exists() ? snap.val() : 'user';
-      const adminLink = document.getElementById('adminLink');
       if (role === 'owner' || role === 'admin' || role === 'junior') {
-        adminLink.style.display = 'flex';
+        document.getElementById('adminLink').style.display = 'flex';
       }
     });
 
@@ -356,7 +355,6 @@
       else if (v === 'market') renderMarket();
       else if (v === 'shop') renderAvatar();
       else if (v === 'inventory') renderInventory();
-      else if (v === 'admin') window.location.href = 'admin.html';
       else document.getElementById('view-container').innerHTML = `<div class="view active"><div class="view-title">${v}</div><p>Раздел в разработке</p></div>`;
     }
 
