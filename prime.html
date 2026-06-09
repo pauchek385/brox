@@ -1,449 +1,120 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BROX | Prime</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧊</text></svg>">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-    <style>
-        :root {
-            --bg-ultra: #030106;
-            --bg-sidebar: rgba(6, 3, 10, 0.99);
-            --bg-card: rgba(18, 9, 32, 0.5);
-            --accent: #9d4edd;
-            --accent-glow: #c77dff;
-            --coin: #ffcc00;
-            --danger: #ff0055;
-            --success: #00ff88;
-            --glass: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.07);
-            --text-main: #ffffff;
-            --text-dim: #7d7d7d;
-            --sidebar-w: 280px;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: var(--bg-ultra);
-            color: var(--text-main);
-            font-family: 'Inter', sans-serif;
-            height: 100vh;
-            display: flex;
-            overflow: hidden;
-        }
-
-        /* Сайдбар */
-        .sidebar {
-            width: var(--sidebar-w);
-            height: 100vh;
-            background: var(--bg-sidebar);
-            backdrop-filter: blur(60px);
-            border-right: 1px solid var(--glass-border);
-            display: flex;
-            flex-direction: column;
-            padding: 40px 25px;
-            flex-shrink: 0;
-            z-index: 100;
-        }
-
-        .brand-box { margin-bottom: 60px; }
-
-        .brand-logo {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 34px;
-            font-weight: 900;
-            letter-spacing: 6px;
-            text-align: center;
-            background: linear-gradient(135deg, #fff 20%, var(--accent-glow));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 12px rgba(157,78,221,0.3));
-        }
-
-        .nav-group { display: flex; flex-direction: column; gap: 6px; }
-
-        .nav-link {
-            padding: 14px 20px;
-            border-radius: 16px;
-            color: var(--text-dim);
-            font-weight: 600;
-            font-size: 15px;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            transition: 0.3s;
-            border: 1px solid transparent;
-        }
-
-        .nav-link:hover {
-            color: #fff;
-            background: var(--glass);
-            border-color: var(--glass-border);
-            transform: translateX(6px);
-        }
-
-        .nav-link.active {
-            background: linear-gradient(90deg, rgba(157,78,221,0.15), transparent);
-            color: #fff;
-            border-left: 4px solid var(--accent);
-        }
-
-        .nav-link i { font-style: normal; font-size: 18px; }
-        .nav-divider { margin: 16px 0; height: 1px; background: var(--glass-border); }
-
-        .sidebar-status {
-            margin-top: auto;
-            padding: 12px;
-            background: #0f0f0f;
-            border-radius: 12px;
-            border: 1px solid var(--glass-border);
-        }
-
-        .status-label {
-            font-size: 0.6rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #555;
-            margin-bottom: 4px;
-        }
-
-        .status-amount {
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        /* Main */
-        .main {
-            flex: 1;
-            padding: 40px 50px;
-            overflow-y: auto;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .prime-container {
-            max-width: 500px;
-            text-align: center;
-            animation: fadeIn 0.6s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-        }
-
-        @keyframes glow {
-            0%, 100% { text-shadow: 0 0 20px rgba(250, 204, 21, 0.5); }
-            50% { text-shadow: 0 0 40px rgba(250, 204, 21, 0.8); }
-        }
-
-        @keyframes pulse-gold {
-            0%, 100% { box-shadow: 0 0 5px #facc15, 0 0 10px #facc15; }
-            50% { box-shadow: 0 0 20px #facc15, 0 0 30px #facc15; }
-        }
-
-        @keyframes shine {
-            0% { left: -100%; }
-            100% { left: 200%; }
-        }
-
-        .crown {
-            font-size: 5rem;
-            animation: float 2s ease-in-out infinite;
-            display: inline-block;
-            filter: drop-shadow(0 0 10px #facc15);
-        }
-
-        .prime-title {
-            margin: 20px 0;
-        }
-
-        .prime-title h1 {
-            font-size: 3rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, #facc15, #ffd700, #ff8c00, #facc15);
-            background-size: 300% 300%;
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            animation: glow 2s ease-in-out infinite, gradientShift 3s ease infinite;
-            letter-spacing: -1px;
-        }
-
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .prime-sub {
-            font-size: 0.9rem;
-            color: #888;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            margin-top: 8px;
-        }
-
-        .reasons-list {
-            background: var(--bg-card);
-            border-radius: 24px;
-            padding: 24px;
-            margin: 30px 0;
-            border: 1px solid var(--glass-border);
-            text-align: left;
-        }
-
-        .reasons-title {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--coin);
-            text-align: center;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .reason-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--glass-border);
-            font-size: 0.9rem;
-        }
-
-        .reason-item:last-child { border-bottom: none; }
-
-        .reason-emoji {
-            font-size: 1.5rem;
-            min-width: 45px;
-            text-align: center;
-        }
-
-        .reason-text {
-            color: #ccc;
-            line-height: 1.4;
-        }
-
-        .reason-text strong { color: var(--coin); }
-
-        .buy-btn {
-            width: 100%;
-            padding: 20px;
-            background: linear-gradient(135deg, #facc15, #ff8c00);
-            border: none;
-            border-radius: 60px;
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: #0b0b0b;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            font-family: inherit;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            animation: pulse-gold 2s infinite;
-        }
-
-        .buy-btn:hover {
-            transform: scale(1.02);
-            filter: brightness(1.05);
-        }
-
-        .buy-btn:active { transform: scale(0.98); }
-
-        .buy-btn::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 50%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transform: skewX(-20deg);
-            animation: shine 3s infinite;
-        }
-
-        .buy-price {
-            font-size: 0.9rem;
-            font-weight: 400;
-            opacity: 0.8;
-            margin-top: 5px;
-        }
-
-        .locked-badge {
-            display: inline-block;
-            background: #2a2a2a;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            color: #f87171;
-            margin-top: 15px;
-        }
-
-        .toast {
-            position: fixed;
-            top: 30px;
-            right: 30px;
-            background: #12121c;
-            border: 1px solid #2a2a35;
-            padding: 18px 28px;
-            border-radius: 18px;
-            color: #fff;
-            z-index: 1000;
-            animation: slideIn 0.4s ease;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BROX | Prime</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧊</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <style>
+    :root {
+      --bg-ultra: #030106;
+      --bg-sidebar: rgba(6, 3, 10, 0.99);
+      --bg-card: rgba(18, 9, 32, 0.5);
+      --accent: #9d4edd;
+      --accent-glow: #c77dff;
+      --accent-deep: #3c096c;
+      --coin: #ffcc00;
+      --coin-glow: rgba(255, 204, 0, 0.3);
+      --danger: #ff0055;
+      --success: #00ff88;
+      --glass: rgba(255, 255, 255, 0.03);
+      --glass-border: rgba(255, 255, 255, 0.07);
+      --glass-bright: rgba(255, 255, 255, 0.12);
+      --sidebar-w: 320px;
+      --text-main: #ffffff;
+      --text-dim: #7d7d7d;
+      --text-mute: #333333;
+      --radius-lg: 35px;
+      --radius-md: 22px;
+      --transition-main: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+      --transition-bounce: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; }
+    body, html {
+      background: var(--bg-ultra); color: var(--text-main); font-family: 'Inter', sans-serif;
+      width:100%!important; height:100%!important; min-height:100vh!important; max-height:100vh!important;
+      overflow:hidden!important; display:flex;
+    }
+    ::-webkit-scrollbar { width:4px; height:4px; background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--glass-border); border-radius:10px; }
+    ::-webkit-scrollbar-thumb:hover { background:var(--accent); }
+    .sidebar { width:var(--sidebar-w); height:100vh; background:var(--bg-sidebar); backdrop-filter:blur(60px); border-right:1px solid var(--glass-border); display:flex; flex-direction:column; padding:50px 35px; position:fixed; left:0; top:0; z-index:2000; overflow-y:auto; }
+    .brand-box { margin-bottom:70px; }
+    .brand-logo { font-family:'Space Grotesk', sans-serif; font-size:36px; font-weight:900; letter-spacing:8px; text-align:center; background:linear-gradient(135deg, #fff 20%, var(--accent-glow)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; filter:drop-shadow(0 0 15px rgba(157,78,221,0.3)); }
+    .nav-group { display:flex; flex-direction:column; gap:10px; }
+    .nav-link { padding:18px 25px; border-radius:20px; color:var(--text-dim); font-weight:700; font-size:15px; text-decoration:none; display:flex; align-items:center; gap:20px; transition:var(--transition-bounce); position:relative; overflow:hidden; border:1px solid transparent; cursor:pointer; }
+    .nav-link:hover { color:#fff; background:var(--glass); transform:translateX(12px); border-color:var(--glass-border); }
+    .nav-link.active { background:linear-gradient(90deg, rgba(157,78,221,0.15), transparent); color:#fff; border-left:5px solid var(--accent); box-shadow:inset 15px 0 30px rgba(0,0,0,0.3); }
+    .nav-link i { font-style:normal; font-size:20px; transition:0.3s; }
+    .nav-link:hover i { transform:scale(1.3) rotate(-10deg); filter:drop-shadow(0 0 8px var(--accent-glow)); }
+    .nav-divider { margin:20px 0; height:1px; background:var(--glass-border); }
+    .viewport { margin-left:var(--sidebar-w); width:calc(100% - var(--sidebar-w)); padding:40px 50px; display:flex; flex-direction:column; height:100vh; max-height:100vh; overflow-y:auto; overflow-x:hidden; }
+    .view-title { font-size:clamp(60px,8vw,140px); font-weight:900; letter-spacing:-6px; line-height:0.85; margin-bottom:30px; background:linear-gradient(to bottom, #fff 40%, #444); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    @keyframes glow { 0%,100%{text-shadow:0 0 20px rgba(250,204,21,0.5)} 50%{text-shadow:0 0 40px rgba(250,204,21,0.8)} }
+    @keyframes pulse-gold { 0%,100%{box-shadow:0 0 5px #facc15,0 0 10px #facc15} 50%{box-shadow:0 0 20px #facc15,0 0 30px #facc15} }
+    @keyframes shine { 0%{left:-100%} 100%{left:200%} }
+    
+    .prime-container { max-width:500px; margin:0 auto; text-align:center; }
+    .crown { font-size:5rem; animation:float 2s ease-in-out infinite; display:inline-block; filter:drop-shadow(0 0 10px #facc15); }
+    .prime-title { margin:20px 0; }
+    .prime-title h1 { font-size:3rem; font-weight:900; background:linear-gradient(135deg,#facc15,#ffd700,#ff8c00,#facc15); background-size:300% 300%; -webkit-background-clip:text; background-clip:text; color:transparent; animation:glow 2s ease-in-out infinite,gradientShift 3s ease infinite; letter-spacing:-1px; }
+    @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+    .prime-sub { font-size:0.9rem; color:#888; letter-spacing:2px; text-transform:uppercase; margin-top:8px; }
+    .reasons-list { background:var(--bg-card); border-radius:24px; padding:24px; margin:30px 0; border:1px solid var(--glass-border); text-align:left; }
+    .reasons-title { font-size:1rem; font-weight:600; color:var(--coin); text-align:center; margin-bottom:20px; text-transform:uppercase; letter-spacing:1px; }
+    .reason-item { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--glass-border); font-size:0.9rem; }
+    .reason-item:last-child { border-bottom:none; }
+    .reason-emoji { font-size:1.5rem; min-width:45px; text-align:center; }
+    .reason-text { color:#ccc; line-height:1.4; }
+    .reason-text strong { color:var(--coin); }
+    .buy-btn { width:100%; padding:20px; background:linear-gradient(135deg,#facc15,#ff8c00); border:none; border-radius:60px; font-size:1.5rem; font-weight:800; color:#0b0b0b; cursor:pointer; transition:0.3s; position:relative; overflow:hidden; font-family:inherit; letter-spacing:2px; text-transform:uppercase; animation:pulse-gold 2s infinite; }
+    .buy-btn:hover { transform:scale(1.02); filter:brightness(1.05); }
+    .buy-btn::after { content:''; position:absolute; top:0; left:-100%; width:50%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent); transform:skewX(-20deg); animation:shine 3s infinite; }
+    .buy-price { font-size:0.9rem; font-weight:400; opacity:0.8; margin-top:5px; }
+    .toast { position:fixed; top:30px; right:30px; background:#12121c; border:1px solid #2a2a35; padding:18px 28px; border-radius:18px; color:#fff; z-index:1000; animation:slideIn 0.4s ease; }
+    @keyframes slideIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+  </style>
 </head>
 <body>
 
-<div class="sidebar">
-    <div class="brand-box"><div class="brand-logo">BROX</div></div>
-    <nav class="nav-group">
-        <a href="home.html" class="nav-link"><i>🏠</i> Home</a>
-        <a href="discovery.html" class="nav-link"><i>🧭</i> Discovery</a>
-        <a href="avatars.html" class="nav-link"><i>🛒</i> Avatar Shop</a>
-        <a href="avatar.html" class="nav-link"><i>👤</i> Avatar</a>
-        <div class="nav-divider"></div>
-        <a href="inventory.html" class="nav-link"><i>🎒</i> Inventory</a>
-        <a href="messages.html" class="nav-link"><i>✉️</i> Messages</a>
-        <a href="settings.html" class="nav-link"><i>⚙️</i> Settings</a>
-        <a href="broxs.html" class="nav-link"><i>🧪</i> Brox Studio</a>
-    </nav>
+<aside class="sidebar">
+  <div class="brand-box"><div class="brand-logo">BROX</div></div>
+  <nav class="nav-group">
+    <a href="home.html" class="nav-link"><i>🏠</i> Home</a>
+    <a href="home.html" class="nav-link"><i>🧭</i> Discovery</a>
+    <a href="home.html" class="nav-link"><i>🛒</i> Avatar Shop</a>
+    <a href="home.html" class="nav-link"><i>👤</i> Avatar</a>
+    <div class="nav-divider"></div>
+    <a href="home.html" class="nav-link"><i>🎒</i> Inventory</a>
+    <a href="home.html" class="nav-link"><i>✉️</i> Messages</a>
+    <a href="settings.html" class="nav-link"><i>⚙️</i> Settings</a>
+    <a href="broxs.html" class="nav-link"><i>🧪</i> Brox Studio</a>
+    <a href="prime.html" class="nav-link active"><i>👑</i> Prime</a>
+  </nav>
+</aside>
 
-    <div class="sidebar-status">
-        <div class="status-label">👑 СТАТУС</div>
-        <div class="status-amount" id="premiumStatusDisplay">🔒 не куплен</div>
+<main class="viewport">
+  <div class="prime-container">
+    <div class="crown">👑</div>
+    <div class="prime-title"><h1>BROX PRIME</h1><div class="prime-sub">Стань легендой</div></div>
+    <div class="reasons-list">
+      <div class="reasons-title">🔥 ПОЧЕМУ ТЫ ДОЛЖЕН КУПИТЬ ЭТО:</div>
+      <div class="reason-item"><div class="reason-emoji">💎</div><div class="reason-text"><strong>Эксклюзивный значок</strong> — все будут видеть, что ты Prime-игрок</div></div>
+      <div class="reason-item"><div class="reason-emoji">💰</div><div class="reason-text"><strong>+1000 BROBUX</strong> ежемесячно на счёт</div></div>
+      <div class="reason-item"><div class="reason-emoji">🚀</div><div class="reason-text"><strong>Ускоренная прокачка</strong> — получай на 50% больше опыта</div></div>
+      <div class="reason-item"><div class="reason-emoji">🎭</div><div class="reason-text"><strong>Эксклюзивные скины</strong> — доступ к Prime-предметам</div></div>
+      <div class="reason-item"><div class="reason-emoji">⚡</div><div class="reason-text"><strong>Приоритетный доступ</strong> — играй в новые игры раньше всех</div></div>
     </div>
-</div>
-
-<div class="main">
-    <div class="prime-container">
-        <div class="crown">👑</div>
-
-        <div class="prime-title">
-            <h1>BROX PRIME</h1>
-            <div class="prime-sub">Стань легендой</div>
-        </div>
-
-        <div class="reasons-list">
-            <div class="reasons-title">🔥 ПОЧЕМУ ТЫ ДОЛЖЕН КУПИТЬ ЭТО:</div>
-
-            <div class="reason-item">
-                <div class="reason-emoji">💎</div>
-                <div class="reason-text"><strong>Эксклюзивный значок</strong> — все будут видеть, что ты Prime-игрок</div>
-            </div>
-
-            <div class="reason-item">
-                <div class="reason-emoji">💰</div>
-                <div class="reason-text"><strong>+1000 BROBUX</strong> ежемесячно на счёт</div>
-            </div>
-
-            <div class="reason-item">
-                <div class="reason-emoji">🚀</div>
-                <div class="reason-text"><strong>Ускоренная прокачка</strong> — получай на 50% больше опыта</div>
-            </div>
-
-            <div class="reason-item">
-                <div class="reason-emoji">🎭</div>
-                <div class="reason-text"><strong>Эксклюзивные скины</strong> — доступ к Prime-предметам</div>
-            </div>
-
-            <div class="reason-item">
-                <div class="reason-emoji">⚡</div>
-                <div class="reason-text"><strong>Приоритетный доступ</strong> — играй в новые игры раньше всех</div>
-            </div>
-        </div>
-
-        <button class="buy-btn" id="buyPrimeBtn">
-            КУПИТЬ PRIME 👑
-            <div class="buy-price">всего за $4.99/мес — дешевле пиццы</div>
-        </button>
-
-        <div class="locked-badge" id="premiumStatusFooter">
-            🔒 статус не активирован
-        </div>
-    </div>
-</div>
-
-<script>
-    firebase.initializeApp({
-        apiKey: "AIzaSyAr8MamzQhhvUjZ1VIWvytRheHWjNtiRIM",
-        authDomain: "spark-9e768.firebaseapp.com",
-        databaseURL: "https://spark-9e768-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "spark-9e768",
-        storageBucket: "spark-9e768.firebasestorage.app",
-        messagingSenderId: "660066059407",
-        appId: "1:660066059407:web:0d87f09259e53563555cfa"
-    });
-
-    const db = firebase.database();
-    const currentUser = localStorage.getItem('spark_user') || 'demo';
-    let hasPremium = false;
-
-    function pushToast(msg) {
-        const t = document.createElement('div');
-        t.className = 'toast';
-        t.textContent = msg;
-        document.body.appendChild(t);
-        setTimeout(() => t.remove(), 3000);
-    }
-
-    function updatePremiumUI() {
-        const statusDisplay = document.getElementById('premiumStatusDisplay');
-        const statusFooter = document.getElementById('premiumStatusFooter');
-
-        if (hasPremium) {
-            statusDisplay.innerHTML = '👑 АКТИВИРОВАН';
-            statusDisplay.style.color = '#facc15';
-            statusFooter.innerHTML = '👑 BROX PRIME АКТИВИРОВАН — ты легенда!';
-            statusFooter.style.background = 'linear-gradient(135deg, #facc15, #ff8c00)';
-            statusFooter.style.color = '#0b0b0b';
-            statusFooter.style.fontWeight = 'bold';
-        } else {
-            statusDisplay.innerHTML = '🔒 не куплен';
-            statusDisplay.style.color = '#f87171';
-            statusFooter.innerHTML = '🔒 статус не активирован';
-            statusFooter.style.background = '#2a2a2a';
-            statusFooter.style.color = '#f87171';
-            statusFooter.style.fontWeight = 'normal';
-        }
-    }
-
-    // Загрузка статуса
-    db.ref(`users/${currentUser}/premium`).on('value', snap => {
-        hasPremium = snap.exists() && snap.val() === true;
-        updatePremiumUI();
-    });
-
-    // Кнопка покупки
-    document.getElementById('buyPrimeBtn').addEventListener('click', () => {
-        if (hasPremium) {
-            pushToast('👑 У тебя уже есть BROX Prime! Ты легенда!');
-        } else {
-            window.open('https://app.lava.top/products/9dd5ffec-8bf8-4932-a069-edfd8dbfa2ff', '_blank');
-        }
-    });
-</script>
+    <button class="buy-btn" onclick="window.open('https://app.lava.top/products/9dd5ffec-8bf8-4932-a069-edfd8dbfa2ff','_blank')">КУПИТЬ PRIME 👑<div class="buy-price">всего за $4.99/мес</div></button>
+  </div>
+</main>
 
 </body>
 </html>
